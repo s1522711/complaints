@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Submit a Complaint</title>
+  <title id="page-title">Submit a Complaint</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/theme.js"></script>
   <style>
     .hero {
       background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
@@ -74,6 +75,12 @@
 
     .char-count { font-size: 12px; color: var(--gray-400); text-align: right; margin-top: 3px; }
 
+    [data-theme="dark"] .form-card { background: #1e293b; border-color: #334155; }
+    [data-theme="dark"] .form-card-header { background: #162032; border-color: #334155; }
+    [data-theme="dark"] .form-footer { background: #162032; border-color: #334155; }
+    [data-theme="dark"] .success-card { background: #1e293b; border-color: #334155; }
+    [data-theme="dark"] .success-id { background: #0f172a; color: #94a3b8; }
+
     .success-card {
       background: white;
       border-radius: var(--radius-lg);
@@ -113,24 +120,25 @@
   <nav class="nav">
     <a href="/" class="nav-brand">
       <div class="brand-icon">&#128172;</div>
-      Complaints
+      <span id="nav-site-name">Complaints</span>
     </a>
     <div class="nav-links">
       <a href="/" class="nav-link active">Submit Complaint</a>
+      <button class="btn btn-secondary btn-sm theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
     </div>
   </nav>
 
   <div class="hero">
-    <h1>Submit a Complaint</h1>
-    <p>We take every complaint seriously. Please fill out the form below and we'll get back to you as soon as possible.</p>
+    <h1 id="hero-title">Submit a Complaint</h1>
+    <p id="hero-subtitle">We take every complaint seriously. Please fill out the form below and we'll get back to you as soon as possible.</p>
   </div>
 
   <div class="main-container">
     <!-- Success card (shown after submit) -->
     <div class="success-card" id="success-card">
       <div class="success-icon">&#10003;</div>
-      <div class="success-title">Complaint Submitted</div>
-      <p class="success-text">Thank you. Your complaint has been received and we will review it shortly.</p>
+      <div class="success-title" id="success-title">Complaint Submitted</div>
+      <p class="success-text" id="success-text">Thank you. Your complaint has been received and we will review it shortly.</p>
       <div class="success-id" id="success-id"></div>
       <button class="btn btn-secondary" onclick="resetForm()">Submit Another</button>
     </div>
@@ -138,7 +146,7 @@
     <!-- Form card -->
     <div class="form-card" id="form-card">
       <div class="form-card-header">
-        <h2>Complaint Details</h2>
+        <h2 id="form-title">Complaint Details</h2>
         <p>Fields marked with <span style="color:var(--red)">*</span> are required</p>
       </div>
 
@@ -162,25 +170,19 @@
             </div>
           </div>
 
-          <div class="form-row">
+          <div id="phone-group">
             <div class="form-group">
               <label class="form-label" for="phone">Phone Number</label>
               <input class="form-input" type="tel" id="phone" name="phone" placeholder="+1 555 000 0000" autocomplete="tel">
             </div>
-            <div class="form-group">
-              <label class="form-label" for="category">Category <span class="required">*</span></label>
-              <select class="form-select" id="category" name="category" required>
-                <option value="" disabled selected>Select a category</option>
-                <option value="Service">Service</option>
-                <option value="Product">Product</option>
-                <option value="Billing">Billing</option>
-                <option value="Staff">Staff</option>
-                <option value="Technical">Technical Issue</option>
-                <option value="Delivery">Delivery</option>
-                <option value="Other">Other</option>
-              </select>
-              <span class="form-error" id="category-error"></span>
-            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="category">Category <span class="required">*</span></label>
+            <select class="form-select" id="category" name="category" required>
+              <option value="" disabled selected>Select a category</option>
+            </select>
+            <span class="form-error" id="category-error"></span>
           </div>
 
           <div class="form-group">
@@ -201,7 +203,7 @@
       </div>
 
       <div class="form-footer">
-        <p class="privacy-note">&#128274; Your information is kept confidential and used only to process your complaint.</p>
+        <p class="privacy-note">&#128274; <span id="privacy-note">Your information is kept confidential and used only to process your complaint.</span></p>
         <button class="btn btn-primary submit-btn" id="submit-btn" onclick="submitForm()">
           <span id="submit-label">Send Complaint</span>
         </button>
@@ -210,6 +212,45 @@
   </div>
 
   <div id="toast-container"></div>
+
+  <script>
+    // Load form config from server and apply to page
+    (async function applyConfig() {
+      try {
+        const cfg = await fetch('/api/form-config').then(r => r.json());
+        document.getElementById('page-title').textContent = cfg.heroTitle + ' — ' + cfg.siteName;
+        document.getElementById('nav-site-name').textContent = cfg.siteName;
+        document.getElementById('hero-title').textContent = cfg.heroTitle;
+        document.getElementById('hero-subtitle').textContent = cfg.heroSubtitle;
+        document.getElementById('form-title').textContent = cfg.formTitle;
+        document.getElementById('privacy-note').textContent = cfg.privacyNote;
+        document.getElementById('submit-label').textContent = cfg.submitLabel;
+        document.getElementById('success-title').textContent = cfg.successTitle;
+        document.getElementById('success-text').textContent = cfg.successText;
+
+        // Phone field visibility
+        document.getElementById('phone-group').style.display = cfg.showPhone ? '' : 'none';
+
+        // Populate categories
+        const sel = document.getElementById('category');
+        cfg.categories.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          sel.appendChild(opt);
+        });
+      } catch {
+        // Fallback: populate categories with defaults if config fails
+        const defaults = ['Service', 'Product', 'Billing', 'Staff', 'Technical Issue', 'Delivery', 'Other'];
+        const sel = document.getElementById('category');
+        defaults.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat; opt.textContent = cat;
+          sel.appendChild(opt);
+        });
+      }
+    })();
+  </script>
 
   <script>
     // Character counter

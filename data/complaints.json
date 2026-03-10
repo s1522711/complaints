@@ -1,1 +1,40 @@
-[]
+[
+  {
+    "id": "8e9637b4-82c0-4768-b23f-ec84e36c87e6",
+    "name": "Tamir",
+    "email": "tester@germani.dev",
+    "phone": "",
+    "category": "Im Being a Bitch",
+    "subject": "gfjkdhgfkjh",
+    "message": "kjdshgfdsfljkhgjlksfdhgkjhuiorequighiweurhgouewqhgjdflkjghlkdfsjhg",
+    "status": "in-progress",
+    "messages": [
+      {
+        "from": "admin",
+        "senderName": "Support",
+        "text": "Hello!",
+        "sentAt": "2026-03-10T11:22:22.747Z"
+      },
+      {
+        "from": "user",
+        "senderName": "Tamir",
+        "text": "oh hi",
+        "sentAt": "2026-03-10T11:22:37.519Z"
+      },
+      {
+        "from": "admin",
+        "senderName": "Support",
+        "text": "heya, i think you are an idiot",
+        "sentAt": "2026-03-10T11:22:56.652Z"
+      },
+      {
+        "from": "user",
+        "senderName": "Tamir",
+        "text": "dingdong",
+        "sentAt": "2026-03-10T11:23:07.985Z"
+      }
+    ],
+    "createdAt": "2026-03-10T11:21:43.248Z",
+    "updatedAt": "2026-03-10T11:22:18.454Z"
+  }
+]

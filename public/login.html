@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Login — Complaints</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/theme.js"></script>
   <style>
     body {
       display: flex;
@@ -80,9 +81,21 @@
     }
 
     .input-icon-wrap .form-input { padding-left: 38px; }
+
+    [data-theme="dark"] body { background: linear-gradient(135deg, #0f172a 0%, #020617 100%); }
+    [data-theme="dark"] .login-box { background: #1e293b; border: 1px solid #334155; }
+    [data-theme="dark"] .login-footer { border-color: #334155; }
+
+    .theme-toggle-fixed {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
+  <button class="btn btn-secondary btn-sm theme-toggle theme-toggle-fixed" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
   <div class="login-box">
     <div class="login-header">
       <div class="login-logo">&#128274;</div>

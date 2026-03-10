@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reply to Complaint</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/theme.js"></script>
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      color: white;
+      padding: 40px 24px 56px;
+      text-align: center;
+    }
+    .hero h1 { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+    .hero p { font-size: 14px; opacity: 0.75; }
+
+    .main-container {
+      max-width: 680px;
+      margin: -28px auto 48px;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .thread-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+
+    .thread-card-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--gray-100);
+      background: var(--gray-50);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .thread-card-header h2 { font-size: 16px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+    .thread-card-header .meta { font-size: 12px; color: var(--gray-400); }
+
+    .thread-messages { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+
+    .empty-thread { text-align: center; padding: 32px; color: var(--gray-400); font-size: 14px; }
+
+    .msg-bubble {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 88%;
+    }
+
+    .msg-bubble.admin { align-self: flex-start; }
+    .msg-bubble.user { align-self: flex-end; align-items: flex-end; }
+
+    .msg-sender { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .msg-text {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .msg-bubble.admin .msg-text {
+      background: var(--gray-100);
+      color: var(--gray-800);
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg-bubble.user .msg-text {
+      background: #dc2626;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-time { font-size: 11px; color: var(--gray-400); }
+
+    .reply-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+
+    .reply-card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--gray-100);
+      background: var(--gray-50);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .reply-card-body { padding: 20px 24px; }
+
+    .reply-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--gray-100);
+      background: var(--gray-50);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .char-count { font-size: 12px; color: var(--gray-400); text-align: right; margin-top: 4px; }
+
+    .error-state { text-align: center; padding: 60px 24px; }
+    .error-state h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .error-state p { color: var(--gray-500); font-size: 14px; }
+
+    .success-banner {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+      padding: 40px 32px;
+      text-align: center;
+      display: none;
+    }
+
+    .success-icon {
+      width: 64px; height: 64px;
+      background: var(--green-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      margin: 0 auto 16px;
+    }
+
+    .success-banner h2 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .success-banner p { color: var(--gray-500); font-size: 14px; }
+
+    [data-theme="dark"] .thread-card { background: #1e293b; border-color: #334155; }
+    [data-theme="dark"] .thread-card-header { background: #162032; border-color: #334155; }
+    [data-theme="dark"] .reply-card { background: #1e293b; border-color: #334155; }
+    [data-theme="dark"] .reply-card-header { background: #162032; border-color: #334155; }
+    [data-theme="dark"] .reply-card-body { background: #1e293b; }
+    [data-theme="dark"] .reply-footer { background: #162032; border-color: #334155; }
+    [data-theme="dark"] .success-banner { background: #1e293b; border-color: #334155; }
+    [data-theme="dark"] .msg-bubble.admin .msg-text { background: #334155; color: #f1f5f9; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <div class="brand-icon">&#128172;</div>
+      <span id="nav-site-name">Complaints</span>
+    </a>
+    <div class="nav-links">
+      <button class="btn btn-secondary btn-sm theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>Message Thread</h1>
+    <p id="hero-ref">Loading complaint…</p>
+  </div>
+
+  <div class="main-container" id="main-container">
+    <div class="thread-card">
+      <div class="thread-card-header">
+        <div>
+          <h2 id="thread-subject">Loading…</h2>
+          <div class="meta" id="thread-meta"></div>
+        </div>
+        <span id="thread-status-badge"></span>
+      </div>
+      <div class="thread-messages" id="thread-messages">
+        <div class="empty-thread">Loading messages…</div>
+      </div>
+    </div>
+
+    <!-- Reply form -->
+    <div class="reply-card" id="reply-card">
+      <div class="reply-card-header">Send a Reply</div>
+      <div class="reply-card-body">
+        <div class="form-group">
+          <textarea class="form-textarea" id="reply-text" rows="5" maxlength="5000"
+            placeholder="Type your reply here…"></textarea>
+          <div class="char-count" id="reply-char-count">0 / 5000</div>
+        </div>
+      </div>
+      <div class="reply-footer">
+        <button class="btn btn-primary" id="reply-btn" onclick="sendReply()">Send Reply</button>
+      </div>
+    </div>
+
+    <!-- Success banner (shown after reply sent) -->
+    <div class="success-banner" id="success-banner">
+      <div class="success-icon">&#10003;</div>
+      <h2>Reply Sent</h2>
+      <p>Your reply has been sent. The support team will get back to you as soon as possible.</p>
+    </div>
+
+    <!-- Error state (shown if complaint not found) -->
+    <div class="error-state" id="error-state" style="display:none;">
+      <div style="font-size:48px;margin-bottom:12px;">&#9888;</div>
+      <h2>Complaint Not Found</h2>
+      <p>This link may be invalid or the complaint may have been removed.</p>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    const complaintId = location.pathname.split('/').pop();
+    let complaintData = null;
+
+    function escHtml(s) {
+      return String(s || '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+        + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function badgeHtml(status) {
+      const map = { 'new': 'badge-new', 'in-progress': 'badge-in-progress', 'resolved': 'badge-resolved', 'dismissed': 'badge-dismissed' };
+      const labels = { 'new': 'New', 'in-progress': 'In Progress', 'resolved': 'Resolved', 'dismissed': 'Dismissed' };
+      return `<span class="badge ${map[status] || ''}">${labels[status] || status}</span>`;
+    }
+
+    function showToast(msg, type = 'success') {
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.innerHTML = `<span>${type === 'error' ? '✕' : '✓'}</span> ${escHtml(msg)}`;
+      document.getElementById('toast-container').appendChild(el);
+      setTimeout(() => {
+        el.style.animation = 'toast-out 0.3s ease forwards';
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
+    }
+
+    function renderMessages(messages) {
+      const container = document.getElementById('thread-messages');
+      if (!messages || !messages.length) {
+        container.innerHTML = '<div class="empty-thread">No messages yet. Send a reply below to start the conversation.</div>';
+        return;
+      }
+      container.innerHTML = messages.map(m => `
+        <div class="msg-bubble ${m.from}">
+          <div class="msg-sender">${m.from === 'admin' ? 'Support' : escHtml(m.senderName)}</div>
+          <div class="msg-text">${escHtml(m.text)}</div>
+          <div class="msg-time">${formatDate(m.sentAt)}</div>
+        </div>
+      `).join('');
+    }
+
+    async function loadThread() {
+      try {
+        const res = await fetch(`/api/complaint/${complaintId}/thread`);
+        if (!res.ok) throw new Error('not found');
+        const data = await res.json();
+        complaintData = data;
+
+        document.getElementById('nav-site-name').textContent = 'Complaints';
+        document.getElementById('hero-ref').textContent = `Reference: ${data.id}`;
+        document.getElementById('thread-subject').textContent = data.subject;
+        document.getElementById('thread-meta').textContent =
+          `${data.category} · Submitted ${formatDate(data.createdAt)}`;
+        document.getElementById('thread-status-badge').innerHTML = badgeHtml(data.status);
+
+        renderMessages(data.messages);
+      } catch {
+        document.getElementById('hero-ref').textContent = '';
+        document.getElementById('thread-subject').textContent = 'Complaint not found';
+        document.getElementById('thread-messages').innerHTML = '';
+        document.getElementById('reply-card').style.display = 'none';
+        document.getElementById('error-state').style.display = 'block';
+      }
+    }
+
+    async function sendReply() {
+      const text = document.getElementById('reply-text').value.trim();
+      if (!text) { showToast('Please enter a message.', 'error'); return; }
+      if (text.length < 2) { showToast('Message is too short.', 'error'); return; }
+
+      const btn = document.getElementById('reply-btn');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      try {
+        const res = await fetch(`/api/complaint/${complaintId}/reply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({}));
+          showToast(json.error || 'Failed to send reply.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Send Reply';
+          return;
+        }
+
+        // Show success
+        document.getElementById('reply-card').style.display = 'none';
+        document.getElementById('success-banner').style.display = 'block';
+        document.getElementById('success-banner').scrollIntoView({ behavior: 'smooth' });
+
+        // Refresh thread to show the new message
+        await loadThread();
+        document.getElementById('reply-card').style.display = 'none';
+        document.getElementById('success-banner').style.display = 'block';
+
+      } catch {
+        showToast('Network error. Please try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Send Reply';
+      }
+    }
+
+    // Character counter
+    const replyText = document.getElementById('reply-text');
+    const charCount = document.getElementById('reply-char-count');
+    replyText.addEventListener('input', () => {
+      charCount.textContent = `${replyText.value.length} / 5000`;
+    });
+
+    loadThread();
+  </script>
+</body>
+</html>

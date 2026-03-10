@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel — Complaints</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/theme.js"></script>
   <style>
     body { display: flex; flex-direction: column; min-height: 100vh; }
 
@@ -152,6 +153,43 @@
     /* Loading / empty */
     .loading-row td { text-align: center; padding: 40px; color: var(--gray-400); }
 
+    /* Message thread modal */
+    .msg-list { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
+
+    .msg-bubble { display: flex; flex-direction: column; gap: 3px; max-width: 85%; }
+    .msg-bubble.admin { align-self: flex-start; }
+    .msg-bubble.user { align-self: flex-end; align-items: flex-end; }
+    .msg-sender { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-400); }
+    .msg-text { padding: 9px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+    .msg-bubble.admin .msg-text { background: var(--gray-100); color: var(--gray-800); border-bottom-left-radius: 3px; }
+    .msg-bubble.user .msg-text { background: #dc2626; color: white; border-bottom-right-radius: 3px; }
+    .msg-time { font-size: 10px; color: var(--gray-400); }
+    .msg-char-count { font-size: 11px; color: var(--gray-400); }
+
+    /* Settings */
+    .settings-section { display: flex; flex-direction: column; gap: 20px; }
+    .settings-group { display: flex; flex-direction: column; gap: 14px; }
+    .settings-divider { border: none; border-top: 1px solid var(--gray-100); margin: 4px 0; }
+
+    .categories-editor { display: flex; flex-direction: column; gap: 6px; }
+    .category-item { display: flex; align-items: center; gap: 8px; }
+    .category-item input { flex: 1; }
+    .category-item .remove-btn { flex-shrink: 0; width: 30px; height: 30px; border: 1px solid var(--gray-200); border-radius: 6px; background: white; cursor: pointer; color: var(--gray-400); font-size: 16px; display: flex; align-items: center; justify-content: center; }
+    .category-item .remove-btn:hover { background: #fee2e2; color: var(--red); border-color: #fca5a5; }
+
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); }
+    .toggle-label { font-size: 14px; font-weight: 500; color: var(--gray-700); }
+    .toggle-desc { font-size: 12px; color: var(--gray-400); margin-top: 1px; }
+
+    .toggle-switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--gray-300); border-radius: 24px; transition: 0.2s; }
+    .toggle-slider::before { position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--red); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    .sidebar-divider { height: 1px; background: var(--gray-200); margin: 8px 4px; }
+
     @media (max-width: 768px) {
       .admin-layout { flex-direction: column; margin: 12px auto; }
       .sidebar { width: 100%; position: static; }
@@ -160,6 +198,18 @@
       .complaint-subject { max-width: 180px; }
       .complaint-preview { max-width: 180px; }
     }
+
+    [data-theme="dark"] .sidebar-link:hover { background: #334155; color: #f1f5f9; }
+    [data-theme="dark"] .sidebar-link.active { background: #3b0c0c; color: #fca5a5; }
+    [data-theme="dark"] .sidebar-count { background: #334155; color: #94a3b8; }
+    [data-theme="dark"] .sidebar-count.red { background: #450a0a; color: #fca5a5; }
+    [data-theme="dark"] .sidebar-divider { background: #334155; }
+    [data-theme="dark"] .message-box { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+    [data-theme="dark"] .toggle-row { background: #0f172a; border-color: #334155; }
+    [data-theme="dark"] .toggle-slider { background: #475569; }
+    [data-theme="dark"] .category-item .remove-btn { background: #1e293b; border-color: #334155; color: #94a3b8; }
+    [data-theme="dark"] .category-item .remove-btn:hover { background: #450a0a; color: #fca5a5; border-color: #7f1d1d; }
+    [data-theme="dark"] .msg-bubble.admin .msg-text { background: #334155; color: #f1f5f9; }
   </style>
 </head>
 <body>
@@ -170,6 +220,7 @@
     </a>
     <div class="nav-links">
       <a href="/" class="nav-link">Public Form</a>
+      <button class="btn btn-secondary btn-sm theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
       <button class="btn btn-secondary btn-sm" onclick="logout()">Sign Out</button>
     </div>
   </nav>
@@ -200,10 +251,21 @@
           <span class="sidebar-count" id="count-dismissed">—</span>
         </a>
       </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Configuration</div>
+        <a class="sidebar-link" id="settings-link" onclick="showSettings()">
+          <span class="sidebar-link-left">&#9881; Form Settings</span>
+        </a>
+      </div>
     </aside>
 
     <!-- MAIN -->
     <main class="main-content">
+
+      <!-- ===== COMPLAINTS VIEW ===== -->
+      <div id="view-complaints">
+
       <!-- Stats -->
       <div class="stats-grid" id="stats-grid">
         <div class="stat-card">
@@ -261,6 +323,108 @@
           <div class="pagination-btns" id="pagination-btns"></div>
         </div>
       </div>
+
+      </div> <!-- end view-complaints -->
+
+      <!-- ===== SETTINGS VIEW ===== -->
+      <div id="view-settings" style="display:none;" class="settings-section">
+
+        <div class="page-header">
+          <div>
+            <div class="page-title">Form Settings</div>
+            <div class="page-subtitle">Changes apply to the public complaint form immediately after saving.</div>
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()">
+            <span id="save-settings-label">Save Changes</span>
+          </button>
+        </div>
+
+        <!-- Branding -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Branding &amp; Text</div></div>
+          <div class="card-body">
+            <div class="settings-group">
+              <div class="form-group">
+                <label class="form-label" for="cfg-site-name">Site Name</label>
+                <input class="form-input" type="text" id="cfg-site-name" placeholder="Complaints">
+                <span class="form-hint">Shown in the navigation bar and emails.</span>
+              </div>
+              <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group">
+                  <label class="form-label" for="cfg-hero-title">Page Heading</label>
+                  <input class="form-input" type="text" id="cfg-hero-title" placeholder="Submit a Complaint">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cfg-form-title">Form Card Title</label>
+                  <input class="form-input" type="text" id="cfg-form-title" placeholder="Complaint Details">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cfg-hero-subtitle">Page Subheading</label>
+                <textarea class="form-textarea" id="cfg-hero-subtitle" rows="2" style="min-height:60px;resize:none;"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cfg-privacy-note">Privacy Note (form footer)</label>
+                <input class="form-input" type="text" id="cfg-privacy-note">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cfg-submit-label">Submit Button Label</label>
+                <input class="form-input" type="text" id="cfg-submit-label" placeholder="Send Complaint" style="max-width:240px;">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Message -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Success Message</div></div>
+          <div class="card-body">
+            <div class="settings-group">
+              <div class="form-group">
+                <label class="form-label" for="cfg-success-title">Title</label>
+                <input class="form-input" type="text" id="cfg-success-title" placeholder="Complaint Submitted">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cfg-success-text">Body Text</label>
+                <textarea class="form-textarea" id="cfg-success-text" rows="2" style="min-height:60px;resize:none;"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fields -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Form Fields</div></div>
+          <div class="card-body">
+            <div class="settings-group">
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">Phone Number Field</div>
+                  <div class="toggle-desc">Show an optional phone number input on the form.</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="cfg-show-phone">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <hr class="settings-divider">
+              <div class="form-group">
+                <label class="form-label">Categories</label>
+                <span class="form-hint" style="margin-bottom:8px;display:block;">Complainants pick one of these when submitting.</span>
+                <div class="categories-editor" id="categories-editor"></div>
+                <button class="btn btn-secondary btn-sm" style="margin-top:8px;align-self:flex-start;" onclick="addCategory()">+ Add Category</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="settings-error" class="alert alert-error" style="display:none;">
+          <span class="alert-icon">&#9888;</span>
+          <span id="settings-error-text"></span>
+        </div>
+
+      </div> <!-- end view-settings -->
+
     </main>
   </div>
 
@@ -280,18 +444,50 @@
         </div>
       </div>
       <div class="modal-footer">
-        <div class="status-select-wrap">
-          <label class="form-label" style="margin:0">Status:</label>
-          <select class="form-select" id="modal-status-select" onchange="updateStatus()" style="width:auto">
-            <option value="new">New</option>
-            <option value="in-progress">In Progress</option>
-            <option value="resolved">Resolved</option>
-            <option value="dismissed">Dismissed</option>
-          </select>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="status-select-wrap">
+            <label class="form-label" style="margin:0">Status:</label>
+            <select class="form-select" id="modal-status-select" onchange="updateStatus()" style="width:auto">
+              <option value="new">New</option>
+              <option value="in-progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="dismissed">Dismissed</option>
+            </select>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-500);cursor:pointer;">
+            <input type="checkbox" id="modal-notify" checked style="cursor:pointer;">
+            Notify complainant by email
+          </label>
         </div>
         <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="openThread(currentModalId)">&#128172; Messages</button>
           <button class="btn btn-danger btn-sm" onclick="deleteFromModal()">&#128465; Delete</button>
           <button class="btn btn-secondary btn-sm" onclick="closeDetailModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thread Modal -->
+  <div class="modal-backdrop" id="thread-modal" style="display:none" onclick="closeThreadModalBackdrop(event)">
+    <div class="modal" style="max-width:560px;display:flex;flex-direction:column;max-height:90vh;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="thread-modal-subject">Messages</div>
+          <div id="thread-modal-meta" style="font-size:12px;color:var(--gray-400);margin-top:2px;"></div>
+        </div>
+        <button class="modal-close" onclick="closeThreadModal()">&#215;</button>
+      </div>
+      <div class="modal-body" style="flex:1;overflow-y:auto;min-height:0;">
+        <div class="msg-list" id="thread-msg-list">
+          <div style="text-align:center;padding:24px;color:var(--gray-400);font-size:13px;">Loading…</div>
+        </div>
+      </div>
+      <div class="modal-footer" style="flex-direction:column;align-items:stretch;gap:8px;">
+        <textarea class="form-textarea" id="thread-msg-text" placeholder="Type a message to the complainant…" maxlength="5000" rows="3" oninput="updateThreadCharCount()" style="resize:none;font-size:13px;"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <span class="msg-char-count" id="thread-msg-char-count">0 / 5000</span>
+          <button class="btn btn-primary btn-sm" id="thread-send-btn" onclick="sendAdminMessage()">Send Message</button>
         </div>
       </div>
     </div>
@@ -477,6 +673,7 @@
 
     // ---- Filter ----
     function setFilter(status) {
+      showComplaints();
       currentFilter = status;
       document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
       document.querySelector(`[data-status="${status}"]`).classList.add('active');
@@ -544,14 +741,108 @@
       if (e.target === document.getElementById('detail-modal')) closeDetailModal();
     }
 
+    // ---- Thread Modal ----
+    async function openThread(id) {
+      if (!id) return;
+      currentModalId = id;
+      document.getElementById('thread-modal').style.display = 'flex';
+      document.getElementById('thread-modal-subject').textContent = 'Loading…';
+      document.getElementById('thread-modal-meta').textContent = '';
+      document.getElementById('thread-msg-list').innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray-400);font-size:13px;">Loading…</div>';
+      document.getElementById('thread-msg-text').value = '';
+      document.getElementById('thread-msg-char-count').textContent = '0 / 5000';
+
+      try {
+        const res = await fetch(`/api/admin/complaints/${id}`);
+        const c = await res.json();
+        document.getElementById('thread-modal-subject').textContent = c.subject;
+        document.getElementById('thread-modal-meta').textContent = `${c.name} · ${c.email}`;
+        renderThread(c.messages || []);
+      } catch {
+        document.getElementById('thread-modal-subject').textContent = 'Error loading thread';
+      }
+    }
+
+    function renderThread(messages) {
+      const list = document.getElementById('thread-msg-list');
+      if (!messages.length) {
+        list.innerHTML = `<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:24px;">No messages yet. Send one below to start the conversation.</div>`;
+        return;
+      }
+      list.innerHTML = messages.map(m => `
+        <div class="msg-bubble ${escHtml(m.from)}">
+          <div class="msg-sender">${m.from === 'admin' ? 'You (Support)' : escHtml(m.senderName)}</div>
+          <div class="msg-text">${escHtml(m.text)}</div>
+          <div class="msg-time">${formatDate(m.sentAt)}</div>
+        </div>
+      `).join('');
+      // Scroll to bottom
+      const body = list.closest('.modal-body');
+      if (body) body.scrollTop = body.scrollHeight;
+    }
+
+    function updateThreadCharCount() {
+      const len = document.getElementById('thread-msg-text').value.length;
+      document.getElementById('thread-msg-char-count').textContent = `${len} / 5000`;
+    }
+
+    async function sendAdminMessage() {
+      if (!currentModalId) return;
+      const text = document.getElementById('thread-msg-text').value.trim();
+      if (!text) { showToast('Please enter a message.', 'error'); return; }
+
+      const btn = document.getElementById('thread-send-btn');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      try {
+        const res = await fetch(`/api/admin/complaints/${currentModalId}/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({}));
+          showToast(json.error || 'Failed to send message.', 'error');
+          return;
+        }
+
+        showToast('Message sent.');
+        document.getElementById('thread-msg-text').value = '';
+        document.getElementById('thread-msg-char-count').textContent = '0 / 5000';
+
+        // Reload thread
+        const detailRes = await fetch(`/api/admin/complaints/${currentModalId}`);
+        if (detailRes.ok) {
+          const c = await detailRes.json();
+          renderThread(c.messages || []);
+        }
+      } catch {
+        showToast('Network error.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Message';
+      }
+    }
+
+    function closeThreadModal() {
+      document.getElementById('thread-modal').style.display = 'none';
+    }
+
+    function closeThreadModalBackdrop(e) {
+      if (e.target === document.getElementById('thread-modal')) closeThreadModal();
+    }
+
     async function updateStatus() {
       if (!currentModalId) return;
       const status = document.getElementById('modal-status-select').value;
+      const notify = document.getElementById('modal-notify').checked;
       try {
         const res = await fetch(`/api/admin/complaints/${currentModalId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify({ status, notify }),
         });
         if (res.ok) {
           showToast('Status updated.');
@@ -615,6 +906,129 @@
     async function logout() {
       await fetch('/admin/logout', { method: 'POST' });
       window.location.href = '/admin/login';
+    }
+
+    // ---- View switching ----
+    function showComplaints() {
+      document.getElementById('view-complaints').style.display = '';
+      document.getElementById('view-settings').style.display = 'none';
+      document.getElementById('settings-link').classList.remove('active');
+    }
+
+    function showSettings() {
+      document.getElementById('view-complaints').style.display = 'none';
+      document.getElementById('view-settings').style.display = '';
+      document.querySelectorAll('.sidebar-link[data-status]').forEach(l => l.classList.remove('active'));
+      document.getElementById('settings-link').classList.add('active');
+      loadSettingsForm();
+    }
+
+    // ---- Settings form ----
+    async function loadSettingsForm() {
+      try {
+        const cfg = await fetch('/api/admin/form-config').then(r => r.json());
+        document.getElementById('cfg-site-name').value = cfg.siteName || '';
+        document.getElementById('cfg-hero-title').value = cfg.heroTitle || '';
+        document.getElementById('cfg-hero-subtitle').value = cfg.heroSubtitle || '';
+        document.getElementById('cfg-form-title').value = cfg.formTitle || '';
+        document.getElementById('cfg-privacy-note').value = cfg.privacyNote || '';
+        document.getElementById('cfg-submit-label').value = cfg.submitLabel || '';
+        document.getElementById('cfg-success-title').value = cfg.successTitle || '';
+        document.getElementById('cfg-success-text').value = cfg.successText || '';
+        document.getElementById('cfg-show-phone').checked = cfg.showPhone !== false;
+        renderCategoryList(cfg.categories || []);
+      } catch {
+        showToast('Failed to load settings.', 'error');
+      }
+    }
+
+    function renderCategoryList(categories) {
+      const editor = document.getElementById('categories-editor');
+      editor.innerHTML = categories.map((cat, i) => `
+        <div class="category-item" data-index="${i}">
+          <input class="form-input" type="text" value="${escHtml(cat)}" placeholder="Category name">
+          <button class="remove-btn" onclick="removeCategory(${i})" title="Remove">&#215;</button>
+        </div>
+      `).join('');
+    }
+
+    function addCategory() {
+      const editor = document.getElementById('categories-editor');
+      const idx = editor.children.length;
+      const div = document.createElement('div');
+      div.className = 'category-item';
+      div.dataset.index = idx;
+      div.innerHTML = `
+        <input class="form-input" type="text" placeholder="Category name">
+        <button class="remove-btn" onclick="removeCategory(${idx})" title="Remove">&#215;</button>
+      `;
+      editor.appendChild(div);
+      div.querySelector('input').focus();
+    }
+
+    function removeCategory(idx) {
+      const editor = document.getElementById('categories-editor');
+      const items = editor.querySelectorAll('.category-item');
+      if (items.length <= 1) { showToast('At least one category is required.', 'error'); return; }
+      items[idx].remove();
+      // Re-index
+      editor.querySelectorAll('.category-item').forEach((el, i) => {
+        el.dataset.index = i;
+        el.querySelector('.remove-btn').setAttribute('onclick', `removeCategory(${i})`);
+      });
+    }
+
+    function getCategories() {
+      return Array.from(document.querySelectorAll('.category-item input'))
+        .map(el => el.value.trim())
+        .filter(Boolean);
+    }
+
+    async function saveSettings() {
+      const errEl = document.getElementById('settings-error');
+      errEl.style.display = 'none';
+      const btn = document.getElementById('save-settings-label');
+      btn.textContent = 'Saving…';
+
+      const categories = getCategories();
+      if (categories.length === 0) {
+        errEl.style.display = 'flex';
+        document.getElementById('settings-error-text').textContent = 'At least one category is required.';
+        btn.textContent = 'Save Changes';
+        return;
+      }
+
+      const payload = {
+        siteName: document.getElementById('cfg-site-name').value.trim(),
+        heroTitle: document.getElementById('cfg-hero-title').value.trim(),
+        heroSubtitle: document.getElementById('cfg-hero-subtitle').value.trim(),
+        formTitle: document.getElementById('cfg-form-title').value.trim(),
+        privacyNote: document.getElementById('cfg-privacy-note').value.trim(),
+        submitLabel: document.getElementById('cfg-submit-label').value.trim(),
+        successTitle: document.getElementById('cfg-success-title').value.trim(),
+        successText: document.getElementById('cfg-success-text').value.trim(),
+        showPhone: document.getElementById('cfg-show-phone').checked,
+        categories,
+      };
+
+      try {
+        const res = await fetch('/api/admin/form-config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const json = await res.json();
+        if (res.ok) {
+          showToast('Form settings saved.');
+        } else {
+          errEl.style.display = 'flex';
+          document.getElementById('settings-error-text').textContent = json.error || 'Failed to save.';
+        }
+      } catch {
+        showToast('Network error. Could not save settings.', 'error');
+      } finally {
+        btn.textContent = 'Save Changes';
+      }
     }
 
     // ---- Init ----

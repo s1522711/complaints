@@ -1,0 +1,17 @@
+{
+  "siteName": "Complaints",
+  "heroTitle": "Submit a Complaint",
+  "heroSubtitle": "We take every complaint seriously. Please fill out the form below and we'll get back to you as soon as possible.",
+  "formTitle": "Complaint Details",
+  "categories": [
+    "Im Being a Bitch",
+    "I Got Offended",
+    "I Didnt Get Icecream",
+    "Other"
+  ],
+  "showPhone": false,
+  "privacyNote": "Your information is kept confidential and used only to process your complaint.",
+  "submitLabel": "Send Complaint",
+  "successTitle": "Complaint Submitted",
+  "successText": "Thank you. Your complaint has been received and we will review it shortly."
+}

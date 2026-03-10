@@ -427,3 +427,86 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
   .modal { margin: 0; border-radius: 0; max-height: 100vh; }
   .detail-row { grid-template-columns: 1fr; gap: 2px; }
 }
+
+/* ---- DARK MODE ---- */
+[data-theme="dark"] {
+  --gray-50: #0f172a;
+  --gray-100: #1e293b;
+  --gray-200: #334155;
+  --gray-300: #475569;
+  --gray-400: #94a3b8;
+  --gray-500: #cbd5e1;
+  --gray-600: #e2e8f0;
+  --gray-700: #f1f5f9;
+  --gray-800: #f8fafc;
+  --gray-900: #ffffff;
+  --red-light: #3b0c0c;
+  --green-light: #052e16;
+  --blue-light: #0c1a3b;
+  --yellow-light: #2d1a06;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow: 0 1px 3px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.6), 0 2px 4px -1px rgba(0,0,0,0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.6), 0 4px 6px -2px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] body { background: #0f172a; color: #f1f5f9; }
+
+[data-theme="dark"] .nav { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .nav-brand { color: #f8fafc; }
+[data-theme="dark"] .nav-link { color: #94a3b8; }
+[data-theme="dark"] .nav-link:hover { background: #334155; color: #f1f5f9; }
+[data-theme="dark"] .nav-link.active { background: #3b0c0c; color: #fca5a5; }
+
+[data-theme="dark"] .card { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .card-header { border-color: #334155; }
+
+[data-theme="dark"] .modal { background: #1e293b; }
+[data-theme="dark"] .modal-header { border-color: #334155; }
+[data-theme="dark"] .modal-footer { border-color: #334155; }
+[data-theme="dark"] .modal-close { background: #334155; color: #94a3b8; }
+[data-theme="dark"] .modal-close:hover { background: #475569; color: #f1f5f9; }
+
+[data-theme="dark"] .form-label { color: #e2e8f0; }
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-textarea { background: #0f172a; border-color: #334155; color: #f1f5f9; }
+[data-theme="dark"] .form-input::placeholder,
+[data-theme="dark"] .form-textarea::placeholder { color: #475569; }
+[data-theme="dark"] .form-input:focus,
+[data-theme="dark"] .form-select:focus,
+[data-theme="dark"] .form-textarea:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(220,38,38,0.2); }
+[data-theme="dark"] .form-input.error,
+[data-theme="dark"] .form-select.error,
+[data-theme="dark"] .form-textarea.error { background: #1a0808; }
+[data-theme="dark"] .form-hint { color: #64748b; }
+
+[data-theme="dark"] .btn-secondary { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+[data-theme="dark"] .btn-secondary:hover { background: #334155; }
+[data-theme="dark"] .btn-danger { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .btn-danger:hover { background: #5a0e0e; }
+
+[data-theme="dark"] .alert-error { background: #450a0a; border-color: #7f1d1d; color: #fca5a5; }
+[data-theme="dark"] .alert-success { background: #052e16; border-color: #14532d; color: #86efac; }
+[data-theme="dark"] .alert-info { background: #0c1a3b; border-color: #1e3a8a; color: #93c5fd; }
+
+[data-theme="dark"] .badge-new { background: #1e3a8a; color: #93c5fd; }
+[data-theme="dark"] .badge-in-progress { background: #3b2000; color: #fcd34d; }
+[data-theme="dark"] .badge-resolved { background: #052e16; color: #86efac; }
+[data-theme="dark"] .badge-dismissed { background: #1e293b; color: #94a3b8; }
+
+[data-theme="dark"] thead th { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] tbody tr { border-color: #1e293b; }
+[data-theme="dark"] tbody tr:hover { background: #1e293b; }
+
+[data-theme="dark"] .page-btn { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+[data-theme="dark"] .page-btn:hover { background: #334155; }
+[data-theme="dark"] .page-btn.active { background: var(--red); border-color: var(--red); color: white; }
+[data-theme="dark"] .pagination { border-color: #334155; }
+
+[data-theme="dark"] .stat-card { background: #1e293b; border-color: #334155; }
+
+[data-theme="dark"] .detail-row { border-color: #334155; }
+
+/* Theme toggle button */
+.theme-toggle { font-size: 16px; padding: 5px 9px; line-height: 1; }
