@@ -372,6 +372,7 @@
         category: document.getElementById('category').value,
         subject: document.getElementById('subject').value.trim(),
         message: document.getElementById('message').value.trim(),
+        lang: window._lang ? window._lang() : 'en',
         'cf-turnstile-response': _tsId !== null ? window.turnstile.getResponse(_tsId) : '',
       };
 

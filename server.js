@@ -127,45 +127,93 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
+// Hebrew strings for complainant-facing emails
+const EMAIL_HE = {
+  confirmation: {
+    subject: (subj) => `קיבלנו את התלונה שלך — ${subj}`,
+    header: (site) => `${site} — קיבלנו את התלונה`,
+    greeting: (name) => `שלום ${name},`,
+    intro: 'תודה שפנית אלינו. קיבלנו את תלונתך ונסקור אותה בהקדם האפשרי.',
+    sectionLabel: 'סיכום התלונה שלך',
+    fields: { subject: 'נושא', category: 'קטגוריה', submitted: 'תאריך הגשה', message: 'הודעה' },
+    refLabel: 'מספר הפניה:',
+    footer: 'שמור את מספר ההפניה לכל תכתובת עתידית בנושא תלונה זו.',
+  },
+  statusUpdate: {
+    subject: (label) => `התלונה שלך עודכנה — ${label}`,
+    header: (site) => `${site} — עדכון תלונה`,
+    greeting: (name) => `שלום ${name},`,
+    intro: 'רצינו לעדכן אותך שמצב תלונתך השתנה.',
+    statusLabel: 'מצב חדש',
+    statusMessages: {
+      'in-progress': 'אנו בוחנים את תלונתך כעת ונצור איתך קשר בהקדם.',
+      'resolved': 'תלונתך נבדקה ואנו רואים אותה כמטופלת. תודה שפנית אלינו.',
+      'dismissed': 'לאחר בחינה מדוקדקת, תלונתך נסגרה. אם אתה סבור שמדובר בטעות, אנא פנה אלינו שוב.',
+    },
+    statusLabels: { 'in-progress': 'בטיפול', 'resolved': 'נסגרה', 'dismissed': 'נדחתה' },
+    fields: { subject: 'נושא', category: 'קטגוריה', submitted: 'תאריך הגשה' },
+    refLabel: 'מספר הפניה:',
+    footer: (site) => `זהו עדכון אוטומטי מ-${site}.`,
+  },
+  adminMessage: {
+    subject: (subj) => `הודעה בנוגע לתלונתך — ${subj}`,
+    header: (site) => `${site} — הודעה מהתמיכה`,
+    greeting: (name) => `שלום ${name},`,
+    regarding: (subj) => `בנוגע לתלונתך: <strong>${subj}</strong>`,
+    replyBtn: 'השב להודעה',
+    refLabel: 'מספר הפניה:',
+  },
+};
+
 // Confirmation email to the person who submitted the complaint
 async function sendConfirmationEmail(complaint) {
   const config = readFormConfig();
-  const submitted = new Date(complaint.createdAt).toLocaleString();
+  const he = complaint.lang === 'he';
+  const s = he ? EMAIL_HE.confirmation : null;
+  const submitted = new Date(complaint.createdAt).toLocaleString(he ? 'he-IL' : undefined);
+  const dir = he ? 'rtl' : 'ltr';
+
+  const subjectLine = he ? s.subject(complaint.subject) : `Complaint received — ${complaint.subject}`;
+  const headerText = he ? s.header(config.siteName) : `${config.siteName} — Complaint Received`;
+  const greeting = he ? s.greeting(complaint.name) : `Hi ${escapeHtml(complaint.name)},`;
+  const intro = he ? s.intro : 'Thank you for submitting your complaint. We have received it and will review it as soon as possible.';
+  const sectionLabel = he ? s.sectionLabel : 'Your Complaint Summary';
+  const f = he ? s.fields : { subject: 'Subject', category: 'Category', submitted: 'Submitted', message: 'Message' };
+  const refLabel = he ? s.refLabel : 'Reference ID:';
+  const footer = he ? s.footer : 'Please keep your Reference ID for future correspondence regarding this complaint.';
 
   const html = `
-    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;direction:${dir};">
       <div style="background:#1f2937;color:white;padding:20px 24px;">
-        <h2 style="margin:0;font-size:20px;">${escapeHtml(config.siteName)} — Complaint Received</h2>
+        <h2 style="margin:0;font-size:20px;">${escapeHtml(headerText)}</h2>
       </div>
       <div style="padding:24px;">
-        <p style="font-size:15px;color:#374151;margin:0 0 16px;">Hi ${escapeHtml(complaint.name)},</p>
-        <p style="font-size:14px;color:#374151;margin:0 0 20px;">
-          Thank you for submitting your complaint. We have received it and will review it as soon as possible.
-        </p>
+        <p style="font-size:15px;color:#374151;margin:0 0 16px;">${escapeHtml(greeting)}</p>
+        <p style="font-size:14px;color:#374151;margin:0 0 20px;">${intro}</p>
         <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:16px 20px;margin-bottom:20px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9ca3af;margin-bottom:12px;">Your Complaint Summary</div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9ca3af;margin-bottom:12px;">${sectionLabel}</div>
           <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <tr><td style="padding:5px 0;font-weight:600;color:#6b7280;width:110px;vertical-align:top;">Subject</td><td style="padding:5px 0;color:#374151;">${escapeHtml(complaint.subject)}</td></tr>
-            <tr><td style="padding:5px 0;font-weight:600;color:#6b7280;vertical-align:top;">Category</td><td style="padding:5px 0;color:#374151;">${escapeHtml(complaint.category)}</td></tr>
-            <tr><td style="padding:5px 0;font-weight:600;color:#6b7280;vertical-align:top;">Submitted</td><td style="padding:5px 0;color:#374151;">${submitted}</td></tr>
-            <tr><td style="padding:5px 0;font-weight:600;color:#6b7280;vertical-align:top;">Message</td><td style="padding:5px 0;color:#374151;white-space:pre-wrap;">${escapeHtml(complaint.message)}</td></tr>
+            <tr><td style="padding:5px 0;font-weight:600;color:#6b7280;width:110px;vertical-align:top;">${f.subject}</td><td style="padding:5px 0;color:#374151;">${escapeHtml(complaint.subject)}</td></tr>
+            <tr><td style="padding:5px 0;font-weight:600;color:#6b7280;vertical-align:top;">${f.category}</td><td style="padding:5px 0;color:#374151;">${escapeHtml(complaint.category)}</td></tr>
+            <tr><td style="padding:5px 0;font-weight:600;color:#6b7280;vertical-align:top;">${f.submitted}</td><td style="padding:5px 0;color:#374151;">${submitted}</td></tr>
+            <tr><td style="padding:5px 0;font-weight:600;color:#6b7280;vertical-align:top;">${f.message}</td><td style="padding:5px 0;color:#374151;white-space:pre-wrap;">${escapeHtml(complaint.message)}</td></tr>
           </table>
         </div>
         <div style="padding:12px 16px;background:#f5f5f5;border-radius:6px;font-size:12px;color:#9ca3af;">
-          Reference ID: <code style="font-size:12px;">${complaint.id}</code>
+          ${refLabel} <code style="font-size:12px;">${complaint.id}</code>
         </div>
       </div>
       <div style="padding:16px 24px;border-top:1px solid #f3f4f6;font-size:12px;color:#9ca3af;text-align:center;">
-        Please keep your Reference ID for future correspondence regarding this complaint.
+        ${footer}
       </div>
     </div>`;
 
   await transporter.sendMail({
     from: `"${config.siteName}" <${process.env.SMTP_USER}>`,
     to: complaint.email,
-    subject: `Complaint received — ${complaint.subject}`,
+    subject: subjectLine,
     html,
-    text: `Hi ${complaint.name},\n\nThank you for submitting your complaint. We have received it and will review it as soon as possible.\n\nSubject: ${complaint.subject}\nCategory: ${complaint.category}\nSubmitted: ${submitted}\n\nMessage:\n${complaint.message}\n\nReference ID: ${complaint.id}\n\nPlease keep your Reference ID for future correspondence.\n\n— ${config.siteName}`,
+    text: `${greeting}\n\n${intro}\n\n${f.subject}: ${complaint.subject}\n${f.category}: ${complaint.category}\n${f.submitted}: ${submitted}\n\n${f.message}:\n${complaint.message}\n\n${refLabel} ${complaint.id}\n\n${footer}\n\n— ${config.siteName}`,
   });
 }
 
@@ -209,14 +257,17 @@ async function sendStatusUpdateEmail(complaint, newStatus) {
   if (newStatus === 'new') return;
 
   const config = readFormConfig();
+  const he = complaint.lang === 'he';
+  const s = he ? EMAIL_HE.statusUpdate : null;
+  const dir = he ? 'rtl' : 'ltr';
 
-  const statusLabels = {
+  const statusLabels = he ? EMAIL_HE.statusUpdate.statusLabels : {
     'in-progress': 'In Progress',
     'resolved': 'Resolved',
     'dismissed': 'Dismissed',
   };
 
-  const statusMessages = {
+  const statusMessages = he ? EMAIL_HE.statusUpdate.statusMessages : {
     'in-progress': 'We are currently reviewing your complaint and will be in touch soon.',
     'resolved': 'Your complaint has been reviewed and we consider it resolved. Thank you for bringing this to our attention.',
     'dismissed': 'After careful review, your complaint has been closed. If you believe this is in error, please resubmit or contact us directly.',
@@ -229,84 +280,102 @@ async function sendStatusUpdateEmail(complaint, newStatus) {
   };
 
   const label = statusLabels[newStatus] || newStatus;
-  const message = statusMessages[newStatus] || 'Your complaint status has been updated.';
+  const message = statusMessages[newStatus] || (he ? 'מצב תלונתך עודכן.' : 'Your complaint status has been updated.');
   const color = statusColors[newStatus] || '#374151';
-  const submitted = new Date(complaint.createdAt).toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' });
+  const locale = he ? 'he-IL' : undefined;
+  const submitted = new Date(complaint.createdAt).toLocaleDateString(locale, { day: '2-digit', month: 'long', year: 'numeric' });
+
+  const subjectLine = he ? s.subject(label) : `Your complaint has been updated — ${label}`;
+  const headerText = he ? s.header(config.siteName) : `${config.siteName} — Complaint Update`;
+  const greeting = he ? s.greeting(complaint.name) : `Hi ${escapeHtml(complaint.name)},`;
+  const intro = he ? s.intro : 'We wanted to let you know that your complaint has been updated.';
+  const statusLabelText = he ? s.statusLabel : 'New Status';
+  const f = he ? s.fields : { subject: 'Subject', category: 'Category', submitted: 'Submitted' };
+  const refLabel = he ? s.refLabel : 'Reference ID:';
+  const footer = he ? s.footer(config.siteName) : `This is an automated update from ${escapeHtml(config.siteName)}.`;
 
   const html = `
-    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;direction:${dir};">
       <div style="background:#1f2937;color:white;padding:20px 24px;">
-        <h2 style="margin:0;font-size:20px;">${escapeHtml(config.siteName)} — Complaint Update</h2>
+        <h2 style="margin:0;font-size:20px;">${escapeHtml(headerText)}</h2>
       </div>
       <div style="padding:24px;">
-        <p style="font-size:15px;color:#374151;margin:0 0 20px;">Hi ${escapeHtml(complaint.name)},</p>
-        <p style="font-size:14px;color:#374151;margin:0 0 20px;">
-          We wanted to let you know that your complaint has been updated.
-        </p>
+        <p style="font-size:15px;color:#374151;margin:0 0 20px;">${escapeHtml(greeting)}</p>
+        <p style="font-size:14px;color:#374151;margin:0 0 20px;">${intro}</p>
         <div style="background:#f9fafb;border:1px solid #e5e7eb;border-left:4px solid ${color};border-radius:6px;padding:16px 20px;margin-bottom:24px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9ca3af;margin-bottom:6px;">New Status</div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9ca3af;margin-bottom:6px;">${statusLabelText}</div>
           <div style="font-size:18px;font-weight:700;color:${color};">${label}</div>
           <p style="font-size:14px;color:#6b7280;margin:8px 0 0;">${message}</p>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:13px;color:#6b7280;">
           <tr>
-            <td style="padding:6px 0;width:130px;font-weight:600;">Subject</td>
+            <td style="padding:6px 0;width:130px;font-weight:600;">${f.subject}</td>
             <td style="padding:6px 0;">${escapeHtml(complaint.subject)}</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;font-weight:600;">Category</td>
+            <td style="padding:6px 0;font-weight:600;">${f.category}</td>
             <td style="padding:6px 0;">${escapeHtml(complaint.category)}</td>
           </tr>
           <tr>
-            <td style="padding:6px 0;font-weight:600;">Submitted</td>
+            <td style="padding:6px 0;font-weight:600;">${f.submitted}</td>
             <td style="padding:6px 0;">${submitted}</td>
           </tr>
         </table>
         <div style="margin-top:20px;padding:12px 16px;background:#f5f5f5;border-radius:6px;font-size:12px;color:#9ca3af;">
-          Reference ID: <code>${complaint.id}</code>
+          ${refLabel} <code>${complaint.id}</code>
         </div>
       </div>
       <div style="padding:16px 24px;border-top:1px solid #f3f4f6;font-size:12px;color:#9ca3af;text-align:center;">
-        This is an automated update from ${escapeHtml(config.siteName)}.
+        ${footer}
       </div>
     </div>`;
 
   await transporter.sendMail({
     from: `"${config.siteName}" <${process.env.SMTP_USER}>`,
     to: complaint.email,
-    subject: `Your complaint has been updated — ${label}`,
+    subject: subjectLine,
     html,
-    text: `Hi ${complaint.name},\n\nYour complaint status has been updated to: ${label}\n\n${message}\n\nSubject: ${complaint.subject}\nCategory: ${complaint.category}\nSubmitted: ${submitted}\nReference ID: ${complaint.id}\n\n— ${config.siteName}`,
+    text: `${greeting}\n\n${intro}\n\n${statusLabelText}: ${label}\n${message}\n\n${f.subject}: ${complaint.subject}\n${f.category}: ${complaint.category}\n${f.submitted}: ${submitted}\n${refLabel} ${complaint.id}\n\n— ${config.siteName}`,
   });
 }
 
 // Email: admin sends a message to the complainant
 async function sendAdminMessageEmail(complaint, messageText, host) {
   const config = readFormConfig();
+  const he = complaint.lang === 'he';
+  const s = he ? EMAIL_HE.adminMessage : null;
+  const dir = he ? 'rtl' : 'ltr';
   const replyUrl = `${host}/reply/${complaint.id}`;
 
+  const subjectLine = he ? s.subject(complaint.subject) : `Message regarding your complaint — ${complaint.subject}`;
+  const headerText = he ? s.header(config.siteName) : `${config.siteName} — Message from Support`;
+  const greeting = he ? s.greeting(complaint.name) : `Hi ${escapeHtml(complaint.name)},`;
+  const regarding = he ? s.regarding(escapeHtml(complaint.subject)) : `Regarding your complaint: <strong>${escapeHtml(complaint.subject)}</strong>`;
+  const replyBtn = he ? s.replyBtn : 'Reply to this message';
+  const refLabel = he ? s.refLabel : 'Reference ID:';
+
   const html = `
-    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;direction:${dir};">
       <div style="background:#1f2937;color:white;padding:20px 24px;">
-        <h2 style="margin:0;font-size:20px;">${escapeHtml(config.siteName)} — Message from Support</h2>
+        <h2 style="margin:0;font-size:20px;">${escapeHtml(headerText)}</h2>
       </div>
       <div style="padding:24px;">
-        <p style="font-size:15px;color:#374151;margin:0 0 16px;">Hi ${escapeHtml(complaint.name)},</p>
-        <p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Regarding your complaint: <strong>${escapeHtml(complaint.subject)}</strong></p>
+        <p style="font-size:15px;color:#374151;margin:0 0 16px;">${escapeHtml(greeting)}</p>
+        <p style="font-size:13px;color:#6b7280;margin:0 0 12px;">${regarding}</p>
         <div style="background:#f9fafb;border:1px solid #e5e7eb;border-left:4px solid #2563eb;border-radius:6px;padding:16px 20px;margin-bottom:20px;white-space:pre-wrap;font-size:14px;color:#374151;">${escapeHtml(messageText)}</div>
-        <a href="${replyUrl}" style="display:inline-block;background:#dc2626;color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;">Reply to this message</a>
+        <a href="${replyUrl}" style="display:inline-block;background:#dc2626;color:white;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;">${replyBtn}</a>
       </div>
       <div style="padding:16px 24px;border-top:1px solid #f3f4f6;font-size:12px;color:#9ca3af;text-align:center;">
-        Reference ID: ${complaint.id}
+        ${refLabel} ${complaint.id}
       </div>
     </div>`;
 
   await transporter.sendMail({
     from: `"${config.siteName}" <${process.env.SMTP_USER}>`,
     to: complaint.email,
-    subject: `Message regarding your complaint — ${complaint.subject}`,
+    subject: subjectLine,
     html,
-    text: `Hi ${complaint.name},\n\nYou have a new message regarding your complaint "${complaint.subject}":\n\n${messageText}\n\nReply here: ${replyUrl}\n\nReference ID: ${complaint.id}\n\n— ${config.siteName}`,
+    text: `${greeting}\n\n${he ? `בנוגע לתלונתך: "${complaint.subject}"` : `You have a new message regarding your complaint "${complaint.subject}"`}:\n\n${messageText}\n\n${he ? 'השב כאן' : 'Reply here'}: ${replyUrl}\n\n${refLabel} ${complaint.id}\n\n— ${config.siteName}`,
   });
 }
 
@@ -421,7 +490,7 @@ app.get('/api/form-config', (_req, res) => {
 
 // Submit complaint (public)
 app.post('/api/complaint', async (req, res) => {
-  const { name, email, phone, category, subject, message, 'cf-turnstile-response': cfToken } = req.body;
+  const { name, email, phone, category, subject, message, lang, 'cf-turnstile-response': cfToken } = req.body;
 
   if (!await verifyTurnstile(cfToken, req.ip)) {
     return res.status(400).json({ error: 'CAPTCHA verification failed. Please try again.' });
@@ -438,7 +507,7 @@ app.post('/api/complaint', async (req, res) => {
   }
 
   try {
-    const complaint = addComplaint({ name, email, phone: phone || '', category, subject, message });
+    const complaint = addComplaint({ name, email, phone: phone || '', category, subject, message, lang: lang === 'he' ? 'he' : 'en' });
     sendComplaintEmail(complaint).catch(err => console.error('Admin email failed:', err.message));
     sendConfirmationEmail(complaint).catch(err => console.error('Confirmation email failed:', err.message));
     res.json({ success: true, id: complaint.id });
