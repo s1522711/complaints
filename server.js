@@ -364,16 +364,20 @@ app.use(session({
 // When running behind a sub-path proxy (BASE_PATH set), rewrite absolute paths in
 // HTML responses and patch res.redirect so Location headers are correct.
 if (BASE_PATH) {
-  app.use((_req, res, next) => {
+  app.use((req, res, next) => {
     const origSendFile = res.sendFile.bind(res);
     res.sendFile = function (filePath, options, callback) {
       if (typeof options === 'function') { callback = options; options = {}; }
       if (filePath.endsWith('.html')) {
         fs.readFile(filePath, 'utf8', (err, content) => {
           if (err) return origSendFile(filePath, options, callback);
+          const ogUrl = process.env.SITE_URL
+            ? process.env.SITE_URL.replace(/\/$/, '') + req.path
+            : '';
           content = content
             .replace('<head>', `<head>\n  <script>window.__BASE__=${JSON.stringify(BASE_PATH)}</script>`)
-            .replace(/(href|src)="\//g, `$1="${BASE_PATH}/`);
+            .replace(/(href|src)="\//g, `$1="${BASE_PATH}/`)
+            .replace('content="__OG_URL__"', `content="${ogUrl}"`);
           res.type('html').send(content);
         });
       } else {
