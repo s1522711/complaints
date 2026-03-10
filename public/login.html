@@ -199,7 +199,7 @@
         const json = await res.json();
 
         if (res.ok && json.success) {
-          window.location.href = '/admin';
+          window.location.href = window.location.pathname.replace(/\/login$/, '');
         } else {
           errorEl.style.display = 'flex';
           document.getElementById('login-error-text').textContent = json.error || 'Invalid credentials.';

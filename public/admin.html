@@ -905,7 +905,7 @@
     // ---- Logout ----
     async function logout() {
       await fetch('/admin/logout', { method: 'POST' });
-      window.location.href = '/admin/login';
+      window.location.href = window.location.pathname + '/login';
     }
 
     // ---- View switching ----
