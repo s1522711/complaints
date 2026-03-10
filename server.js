@@ -524,7 +524,7 @@ app.post('/api/admin/complaints/:id/message', requireAuth, async (req, res) => {
   const result = addMessage(req.params.id, 'admin', 'Support', text.trim());
   if (!result) return res.status(500).json({ error: 'Failed to save message.' });
 
-  const host = `${req.protocol}://${req.get('host')}`;
+  const host = (process.env.SITE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '') + BASE_PATH;
   sendAdminMessageEmail(complaint, text.trim(), host).catch(err =>
     console.error('Admin message email failed:', err.message)
   );
