@@ -8,6 +8,8 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY);
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'complaints.json');
 const CONFIG_FILE = path.join(DATA_DIR, 'form-config.json');
