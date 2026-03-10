@@ -8,6 +8,7 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const BASE_PATH = (process.env.BASE_PATH || '').replace(/\/$/, '');
 
 if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY);
 const DATA_DIR = path.join(__dirname, 'data');
@@ -352,6 +353,10 @@ async function verifyTurnstile(token, ip) {
 // --- Middleware ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve index.html explicitly so the BASE_PATH middleware below can rewrite it
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
   secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
@@ -359,6 +364,36 @@ app.use(session({
   saveUninitialized: false,
   cookie: { secure: false, maxAge: 8 * 60 * 60 * 1000 },
 }));
+
+// When running behind a sub-path proxy (BASE_PATH set), rewrite absolute paths in
+// HTML responses and patch res.redirect so Location headers are correct.
+if (BASE_PATH) {
+  app.use((_req, res, next) => {
+    const origSendFile = res.sendFile.bind(res);
+    res.sendFile = function (filePath, options, callback) {
+      if (typeof options === 'function') { callback = options; options = {}; }
+      if (filePath.endsWith('.html')) {
+        fs.readFile(filePath, 'utf8', (err, content) => {
+          if (err) return origSendFile(filePath, options, callback);
+          content = content
+            .replace('<head>', `<head>\n  <script>window.__BASE__=${JSON.stringify(BASE_PATH)}</script>`)
+            .replace(/(href|src)="\//g, `$1="${BASE_PATH}/`);
+          res.type('html').send(content);
+        });
+      } else {
+        origSendFile(filePath, options, callback);
+      }
+    };
+
+    const origRedirect = res.redirect.bind(res);
+    res.redirect = function (url, ...args) {
+      if (typeof url === 'string' && url.startsWith('/')) url = BASE_PATH + url;
+      return origRedirect(url, ...args);
+    };
+
+    next();
+  });
+}
 
 function requireAuth(req, res, next) {
   if (req.session && req.session.authenticated) return next();

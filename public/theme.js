@@ -28,3 +28,15 @@ function _syncThemeBtns() {
 }
 
 document.addEventListener('DOMContentLoaded', _syncThemeBtns);
+
+// When served behind a sub-path proxy, intercept fetch so absolute API paths
+// (e.g. /api/complaint) are automatically prefixed with the base path.
+if (window.__BASE__) {
+  var _origFetch = window.fetch;
+  window.fetch = function (url, opts) {
+    if (typeof url === 'string' && url.charAt(0) === '/' && url.charAt(1) !== '/') {
+      url = window.__BASE__ + url;
+    }
+    return _origFetch.call(this, url, opts);
+  };
+}
