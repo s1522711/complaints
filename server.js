@@ -353,10 +353,6 @@ async function verifyTurnstile(token, ip) {
 // --- Middleware ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve index.html explicitly so the BASE_PATH middleware below can rewrite it
-app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
   secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
@@ -401,6 +397,8 @@ function requireAuth(req, res, next) {
 }
 
 // --- Routes ---
+
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // Public: get form config (used by the form page)
 app.get('/api/form-config', (_req, res) => {
