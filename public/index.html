@@ -10,6 +10,7 @@
   <meta property="og:url" content="__OG_URL__">
   <meta name="theme-color" content="#dc2626">
   <link rel="stylesheet" href="/style.css">
+  <script src="/i18n.js"></script>
   <script src="/theme.js"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=_onTurnstileLoad" async defer></script>
   <style>
@@ -129,7 +130,8 @@
       <span id="nav-site-name">Complaints</span>
     </a>
     <div class="nav-links">
-      <a href="/" class="nav-link active">Submit Complaint</a>
+      <a href="/" class="nav-link active" data-i18n="nav.submit">Submit Complaint</a>
+      <button class="btn btn-secondary btn-sm" onclick="toggleLang()" id="lang-btn" data-i18n="nav.lang">עברית</button>
       <button class="btn btn-secondary btn-sm theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
     </div>
   </nav>
@@ -146,14 +148,14 @@
       <div class="success-title" id="success-title">Complaint Submitted</div>
       <p class="success-text" id="success-text">Thank you. Your complaint has been received and we will review it shortly.</p>
       <div class="success-id" id="success-id"></div>
-      <button class="btn btn-secondary" onclick="resetForm()">Submit Another</button>
+      <button class="btn btn-secondary" onclick="resetForm()" data-i18n="form.submit-another">Submit Another</button>
     </div>
 
     <!-- Form card -->
     <div class="form-card" id="form-card">
       <div class="form-card-header">
         <h2 id="form-title">Complaint Details</h2>
-        <p>Fields marked with <span style="color:var(--red)">*</span> are required</p>
+        <p><span data-i18n="form.required-note">Fields marked with * are required</span></p>
       </div>
 
       <div class="form-body">
@@ -165,41 +167,41 @@
         <form id="complaint-form" class="form-fields" novalidate>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" for="name">Full Name <span class="required">*</span></label>
-              <input class="form-input" type="text" id="name" name="name" placeholder="John Smith" autocomplete="name" required>
+              <label class="form-label" for="name"><span data-i18n="form.name">Full Name</span> <span class="required">*</span></label>
+              <input class="form-input" type="text" id="name" name="name" placeholder="John Smith" autocomplete="name" required data-i18n="form.name.ph">
               <span class="form-error" id="name-error"></span>
             </div>
             <div class="form-group">
-              <label class="form-label" for="email">Email Address <span class="required">*</span></label>
-              <input class="form-input" type="email" id="email" name="email" placeholder="john@example.com" autocomplete="email" required>
+              <label class="form-label" for="email"><span data-i18n="form.email">Email Address</span> <span class="required">*</span></label>
+              <input class="form-input" type="email" id="email" name="email" placeholder="john@example.com" autocomplete="email" required data-i18n="form.email.ph">
               <span class="form-error" id="email-error"></span>
             </div>
           </div>
 
           <div id="phone-group">
             <div class="form-group">
-              <label class="form-label" for="phone">Phone Number</label>
-              <input class="form-input" type="tel" id="phone" name="phone" placeholder="+1 555 000 0000" autocomplete="tel">
+              <label class="form-label" for="phone"><span data-i18n="form.phone">Phone Number</span></label>
+              <input class="form-input" type="tel" id="phone" name="phone" placeholder="+1 555 000 0000" autocomplete="tel" data-i18n="form.phone.ph">
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="category">Category <span class="required">*</span></label>
+            <label class="form-label" for="category"><span data-i18n="form.category">Category</span> <span class="required">*</span></label>
             <select class="form-select" id="category" name="category" required>
-              <option value="" disabled selected>Select a category</option>
+              <option value="" disabled selected data-i18n="form.category.ph">Select a category</option>
             </select>
             <span class="form-error" id="category-error"></span>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="subject">Subject <span class="required">*</span></label>
-            <input class="form-input" type="text" id="subject" name="subject" placeholder="Brief description of your complaint" maxlength="120" required>
+            <label class="form-label" for="subject"><span data-i18n="form.subject">Subject</span> <span class="required">*</span></label>
+            <input class="form-input" type="text" id="subject" name="subject" placeholder="Brief description of your complaint" maxlength="120" required data-i18n="form.subject.ph">
             <span class="form-error" id="subject-error"></span>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="message">Message <span class="required">*</span></label>
-            <textarea class="form-textarea" id="message" name="message" placeholder="Please describe your complaint in detail, including any relevant dates, reference numbers, or other information..." rows="6" maxlength="5000" required></textarea>
+            <label class="form-label" for="message"><span data-i18n="form.message">Message</span> <span class="required">*</span></label>
+            <textarea class="form-textarea" id="message" name="message" placeholder="Please describe your complaint in detail, including any relevant dates, reference numbers, or other information..." rows="6" maxlength="5000" required data-i18n="form.message.ph"></textarea>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
               <span class="form-error" id="message-error"></span>
               <span class="char-count" id="char-count">0 / 5000</span>
@@ -234,36 +236,53 @@
       });
     }
 
-    // Load form config from server and apply to page
-    (async function applyConfig() {
+    // Load form config and apply — language-aware
+    let _formCfg = null;
+
+    function _cfgVal(key) {
+      if (!_formCfg) return '';
+      const lang = window._lang ? window._lang() : 'en';
+      if (lang === 'he' && _formCfg[key + '_he']) return _formCfg[key + '_he'];
+      return _formCfg[key] || '';
+    }
+
+    function applyFormConfig() {
+      if (!_formCfg) return;
+      document.getElementById('page-title').textContent = _cfgVal('heroTitle') + ' — ' + _cfgVal('siteName');
+      document.getElementById('nav-site-name').textContent = _cfgVal('siteName');
+      document.getElementById('hero-title').textContent = _cfgVal('heroTitle');
+      document.getElementById('hero-subtitle').textContent = _cfgVal('heroSubtitle');
+      document.getElementById('form-title').textContent = _cfgVal('formTitle');
+      document.getElementById('privacy-note').textContent = _cfgVal('privacyNote');
+      document.getElementById('submit-label').textContent = _cfgVal('submitLabel');
+      document.getElementById('success-title').textContent = _cfgVal('successTitle');
+      document.getElementById('success-text').textContent = _cfgVal('successText');
+      document.getElementById('phone-group').style.display = _formCfg.showPhone ? '' : 'none';
+
+      // Rebuild category options — value stays English, display text is translated
+      const sel = document.getElementById('category');
+      const currentVal = sel.value;
+      while (sel.options.length > 1) sel.remove(1);
+      const lang = window._lang ? window._lang() : 'en';
+      const catsHe = _formCfg.categories_he && _formCfg.categories_he.length ? _formCfg.categories_he : null;
+      (_formCfg.categories || []).forEach((cat, i) => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = (lang === 'he' && catsHe && catsHe[i]) ? catsHe[i] : cat;
+        sel.appendChild(opt);
+      });
+      if (currentVal) sel.value = currentVal;
+    }
+
+    document.addEventListener('langchange', applyFormConfig);
+
+    (async function loadConfig() {
       try {
         const cfg = await fetch('/api/form-config').then(r => r.json());
-        document.getElementById('page-title').textContent = cfg.heroTitle + ' — ' + cfg.siteName;
-        document.getElementById('nav-site-name').textContent = cfg.siteName;
-        document.getElementById('hero-title').textContent = cfg.heroTitle;
-        document.getElementById('hero-subtitle').textContent = cfg.heroSubtitle;
-        document.getElementById('form-title').textContent = cfg.formTitle;
-        document.getElementById('privacy-note').textContent = cfg.privacyNote;
-        document.getElementById('submit-label').textContent = cfg.submitLabel;
-        document.getElementById('success-title').textContent = cfg.successTitle;
-        document.getElementById('success-text').textContent = cfg.successText;
-
-        // Phone field visibility
-        document.getElementById('phone-group').style.display = cfg.showPhone ? '' : 'none';
-
-        // Populate categories
-        const sel = document.getElementById('category');
-        cfg.categories.forEach(cat => {
-          const opt = document.createElement('option');
-          opt.value = cat;
-          opt.textContent = cat;
-          sel.appendChild(opt);
-        });
-
-        // Turnstile
+        _formCfg = cfg;
+        applyFormConfig();
         if (cfg.turnstileSiteKey) { _tsKey = cfg.turnstileSiteKey; _renderTurnstile(); }
       } catch {
-        // Fallback: populate categories with defaults if config fails
         const defaults = ['Service', 'Product', 'Billing', 'Staff', 'Technical Issue', 'Delivery', 'Other'];
         const sel = document.getElementById('category');
         defaults.forEach(cat => {
@@ -312,22 +331,22 @@
       let valid = true;
 
       const name = document.getElementById('name').value.trim();
-      if (!name) { showError('name', 'Full name is required.'); valid = false; }
+      if (!name) { showError('name', t('err.name-required')); valid = false; }
 
       const email = document.getElementById('email').value.trim();
-      if (!email) { showError('email', 'Email is required.'); valid = false; }
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('email', 'Please enter a valid email address.'); valid = false; }
+      if (!email) { showError('email', t('err.email-required')); valid = false; }
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('email', t('err.email-invalid')); valid = false; }
 
       const category = document.getElementById('category').value;
-      if (!category) { showError('category', 'Please select a category.'); valid = false; }
+      if (!category) { showError('category', t('err.category-required')); valid = false; }
 
       const subject = document.getElementById('subject').value.trim();
-      if (!subject) { showError('subject', 'Subject is required.'); valid = false; }
-      else if (subject.length < 5) { showError('subject', 'Subject must be at least 5 characters.'); valid = false; }
+      if (!subject) { showError('subject', t('err.subject-required')); valid = false; }
+      else if (subject.length < 5) { showError('subject', t('err.subject-short')); valid = false; }
 
       const message = document.getElementById('message').value.trim();
-      if (!message) { showError('message', 'Message is required.'); valid = false; }
-      else if (message.length < 10) { showError('message', 'Message must be at least 10 characters.'); valid = false; }
+      if (!message) { showError('message', t('err.message-required')); valid = false; }
+      else if (message.length < 10) { showError('message', t('err.message-short')); valid = false; }
 
       return valid;
     }
@@ -338,7 +357,7 @@
       // Turnstile check
       if (_tsKey) {
         const tok = _tsId !== null ? window.turnstile.getResponse(_tsId) : '';
-        if (!tok) { showGlobalError('Please complete the CAPTCHA verification.'); return; }
+        if (!tok) { showGlobalError(t('err.captcha')); return; }
       }
 
       const btn = document.getElementById('submit-btn');
@@ -366,7 +385,7 @@
         const json = await res.json();
 
         if (!res.ok) {
-          showGlobalError(json.error || 'Something went wrong. Please try again.');
+          showGlobalError(json.error || t('err.generic'));
           btn.disabled = false;
           label.textContent = 'Send Complaint';
           if (_tsId !== null) window.turnstile.reset(_tsId);
@@ -377,11 +396,11 @@
         document.getElementById('form-card').style.display = 'none';
         const successCard = document.getElementById('success-card');
         successCard.style.display = 'block';
-        document.getElementById('success-id').textContent = 'Reference ID: ' + json.id;
+        document.getElementById('success-id').textContent = t('form.ref-id') + json.id;
         successCard.scrollIntoView({ behavior: 'smooth' });
 
       } catch (err) {
-        showGlobalError('Network error. Please check your connection and try again.');
+        showGlobalError(t('err.network'));
         btn.disabled = false;
         label.textContent = 'Send Complaint';
         if (_tsId !== null) window.turnstile.reset(_tsId);

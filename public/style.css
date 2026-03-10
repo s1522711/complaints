@@ -510,3 +510,14 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
 
 /* Theme toggle button */
 .theme-toggle { font-size: 16px; padding: 5px 9px; line-height: 1; }
+
+/* ── RTL (Hebrew) support ─────────────────────────────────────── */
+[dir="rtl"] .input-icon { left: auto; right: 13px; }
+[dir="rtl"] .input-icon-wrap .form-input { padding-left: 12px; padding-right: 38px; }
+[dir="rtl"] .search-icon { left: auto; right: 12px; }
+[dir="rtl"] .search-input { padding-left: 12px !important; padding-right: 36px !important; }
+[dir="rtl"] .char-count { text-align: left; }
+[dir="rtl"] .form-footer { flex-direction: row-reverse; }
+[dir="rtl"] .nav { flex-direction: row; }
+[dir="rtl"] .sidebar-count { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .action-btns { flex-direction: row-reverse; }

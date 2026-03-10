@@ -17,15 +17,24 @@ const CONFIG_FILE = path.join(DATA_DIR, 'form-config.json');
 
 const DEFAULT_CONFIG = {
   siteName: 'Complaints',
+  siteName_he: '',
   heroTitle: 'Submit a Complaint',
+  heroTitle_he: '',
   heroSubtitle: "We take every complaint seriously. Please fill out the form below and we'll get back to you as soon as possible.",
+  heroSubtitle_he: '',
   formTitle: 'Complaint Details',
+  formTitle_he: '',
   categories: ['Service', 'Product', 'Billing', 'Staff', 'Technical Issue', 'Delivery', 'Other'],
+  categories_he: [],
   showPhone: true,
   privacyNote: 'Your information is kept confidential and used only to process your complaint.',
+  privacyNote_he: '',
   submitLabel: 'Send Complaint',
+  submitLabel_he: '',
   successTitle: 'Complaint Submitted',
+  successTitle_he: '',
   successText: 'Thank you. Your complaint has been received and we will review it shortly.',
+  successText_he: '',
 };
 
 // Ensure data directory and files exist
@@ -600,7 +609,18 @@ app.get('/api/admin/form-config', requireAuth, (_req, res) => {
 
 // API: save form config (protected)
 app.put('/api/admin/form-config', requireAuth, (req, res) => {
-  const { siteName, heroTitle, heroSubtitle, formTitle, categories, showPhone, privacyNote, submitLabel, successTitle, successText } = req.body;
+  const {
+    siteName, siteName_he,
+    heroTitle, heroTitle_he,
+    heroSubtitle, heroSubtitle_he,
+    formTitle, formTitle_he,
+    categories, categories_he,
+    showPhone,
+    privacyNote, privacyNote_he,
+    submitLabel, submitLabel_he,
+    successTitle, successTitle_he,
+    successText, successText_he,
+  } = req.body;
 
   // Validate categories is an array of non-empty strings
   if (!Array.isArray(categories) || categories.length === 0) {
@@ -609,15 +629,24 @@ app.put('/api/admin/form-config', requireAuth, (req, res) => {
 
   const config = {
     siteName: String(siteName || DEFAULT_CONFIG.siteName).trim(),
+    siteName_he: String(siteName_he || '').trim(),
     heroTitle: String(heroTitle || DEFAULT_CONFIG.heroTitle).trim(),
+    heroTitle_he: String(heroTitle_he || '').trim(),
     heroSubtitle: String(heroSubtitle || DEFAULT_CONFIG.heroSubtitle).trim(),
+    heroSubtitle_he: String(heroSubtitle_he || '').trim(),
     formTitle: String(formTitle || DEFAULT_CONFIG.formTitle).trim(),
+    formTitle_he: String(formTitle_he || '').trim(),
     categories: categories.map(c => String(c).trim()).filter(Boolean),
+    categories_he: Array.isArray(categories_he) ? categories_he.map(c => String(c).trim()) : [],
     showPhone: Boolean(showPhone),
     privacyNote: String(privacyNote || DEFAULT_CONFIG.privacyNote).trim(),
+    privacyNote_he: String(privacyNote_he || '').trim(),
     submitLabel: String(submitLabel || DEFAULT_CONFIG.submitLabel).trim(),
+    submitLabel_he: String(submitLabel_he || '').trim(),
     successTitle: String(successTitle || DEFAULT_CONFIG.successTitle).trim(),
+    successTitle_he: String(successTitle_he || '').trim(),
     successText: String(successText || DEFAULT_CONFIG.successText).trim(),
+    successText_he: String(successText_he || '').trim(),
   };
 
   writeFormConfig(config);

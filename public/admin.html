@@ -11,6 +11,7 @@
   <meta property="og:url" content="__OG_URL__">
   <meta name="theme-color" content="#1f2937">
   <link rel="stylesheet" href="/style.css">
+  <script src="/i18n.js"></script>
   <script src="/theme.js"></script>
   <style>
     body { display: flex; flex-direction: column; min-height: 100vh; }
@@ -179,7 +180,9 @@
 
     .categories-editor { display: flex; flex-direction: column; gap: 6px; }
     .category-item { display: flex; align-items: center; gap: 8px; }
-    .category-item input { flex: 1; }
+    .category-item .cat-en { flex: 1; }
+    .category-item .cat-he { flex: 1; }
+    .he-label { margin-top: 6px; font-size: 11px; color: var(--gray-400); font-weight: 700; }
     .category-item .remove-btn { flex-shrink: 0; width: 30px; height: 30px; border: 1px solid var(--gray-200); border-radius: 6px; background: white; cursor: pointer; color: var(--gray-400); font-size: 16px; display: flex; align-items: center; justify-content: center; }
     .category-item .remove-btn:hover { background: #fee2e2; color: var(--red); border-color: #fca5a5; }
 
@@ -225,9 +228,10 @@
       Complaints
     </a>
     <div class="nav-links">
-      <a href="/" class="nav-link">Public Form</a>
+      <a href="/" class="nav-link" data-i18n="nav.public-form">Public Form</a>
+      <button class="btn btn-secondary btn-sm" onclick="toggleLang()" data-i18n="nav.lang">עברית</button>
       <button class="btn btn-secondary btn-sm theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
-      <button class="btn btn-secondary btn-sm" onclick="logout()">Sign Out</button>
+      <button class="btn btn-secondary btn-sm" onclick="logout()" data-i18n="nav.sign-out">Sign Out</button>
     </div>
   </nav>
 
@@ -235,33 +239,33 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-section">
-        <div class="sidebar-label">Filter by Status</div>
+        <div class="sidebar-label" data-i18n="admin.filter-label">Filter by Status</div>
         <a class="sidebar-link active" data-status="all" onclick="setFilter('all')">
-          <span class="sidebar-link-left">&#128203; All Complaints</span>
+          <span class="sidebar-link-left">&#128203; <span data-i18n="admin.all">All Complaints</span></span>
           <span class="sidebar-count" id="count-all">—</span>
         </a>
         <a class="sidebar-link" data-status="new" onclick="setFilter('new')">
-          <span class="sidebar-link-left">&#128312; New</span>
+          <span class="sidebar-link-left">&#128312; <span data-i18n="admin.new">New</span></span>
           <span class="sidebar-count red" id="count-new">—</span>
         </a>
         <a class="sidebar-link" data-status="in-progress" onclick="setFilter('in-progress')">
-          <span class="sidebar-link-left">&#9203; In Progress</span>
+          <span class="sidebar-link-left">&#9203; <span data-i18n="admin.in-progress">In Progress</span></span>
           <span class="sidebar-count" id="count-in-progress">—</span>
         </a>
         <a class="sidebar-link" data-status="resolved" onclick="setFilter('resolved')">
-          <span class="sidebar-link-left">&#10004; Resolved</span>
+          <span class="sidebar-link-left">&#10004; <span data-i18n="admin.resolved">Resolved</span></span>
           <span class="sidebar-count" id="count-resolved">—</span>
         </a>
         <a class="sidebar-link" data-status="dismissed" onclick="setFilter('dismissed')">
-          <span class="sidebar-link-left">&#128683; Dismissed</span>
+          <span class="sidebar-link-left">&#128683; <span data-i18n="admin.dismissed">Dismissed</span></span>
           <span class="sidebar-count" id="count-dismissed">—</span>
         </a>
       </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-section">
-        <div class="sidebar-label">Configuration</div>
+        <div class="sidebar-label" data-i18n="admin.config-label">Configuration</div>
         <a class="sidebar-link" id="settings-link" onclick="showSettings()">
-          <span class="sidebar-link-left">&#9881; Form Settings</span>
+          <span class="sidebar-link-left" data-i18n="admin.form-settings">⚙ Form Settings</span>
         </a>
       </div>
     </aside>
@@ -276,19 +280,19 @@
       <div class="stats-grid" id="stats-grid">
         <div class="stat-card">
           <div class="stat-number" id="stat-total">—</div>
-          <div class="stat-label">Total Complaints</div>
+          <div class="stat-label" data-i18n="admin.stat-total">Total Complaints</div>
         </div>
         <div class="stat-card red">
           <div class="stat-number" id="stat-new">—</div>
-          <div class="stat-label">New</div>
+          <div class="stat-label" data-i18n="admin.stat-new">New</div>
         </div>
         <div class="stat-card yellow">
           <div class="stat-number" id="stat-inprogress">—</div>
-          <div class="stat-label">In Progress</div>
+          <div class="stat-label" data-i18n="admin.stat-inprogress">In Progress</div>
         </div>
         <div class="stat-card green">
           <div class="stat-number" id="stat-resolved">—</div>
-          <div class="stat-label">Resolved</div>
+          <div class="stat-label" data-i18n="admin.stat-resolved">Resolved</div>
         </div>
       </div>
 
@@ -301,7 +305,7 @@
           <div class="filters-bar">
             <div class="search-wrap">
               <span class="search-icon">&#128269;</span>
-              <input class="form-input search-input" type="text" id="search-input" placeholder="Search complaints..." oninput="onSearch()">
+              <input class="form-input search-input" type="text" id="search-input" placeholder="Search complaints..." oninput="onSearch()" data-i18n="admin.search-ph">
             </div>
           </div>
         </div>
@@ -310,16 +314,16 @@
           <table id="complaints-table">
             <thead>
               <tr>
-                <th>Complaint</th>
-                <th>From</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th style="width:80px">Actions</th>
+                <th data-i18n="admin.col-complaint">Complaint</th>
+                <th data-i18n="admin.col-from">From</th>
+                <th data-i18n="admin.col-category">Category</th>
+                <th data-i18n="admin.col-status">Status</th>
+                <th data-i18n="admin.col-date">Date</th>
+                <th style="width:80px" data-i18n="admin.col-actions">Actions</th>
               </tr>
             </thead>
             <tbody id="table-body">
-              <tr class="loading-row"><td colspan="6">Loading...</td></tr>
+              <tr class="loading-row"><td colspan="6" data-i18n="admin.loading">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -337,45 +341,57 @@
 
         <div class="page-header">
           <div>
-            <div class="page-title">Form Settings</div>
-            <div class="page-subtitle">Changes apply to the public complaint form immediately after saving.</div>
+            <div class="page-title" data-i18n="admin.settings-title">Form Settings</div>
+            <div class="page-subtitle" data-i18n="admin.settings-subtitle">Changes apply to the public complaint form immediately after saving.</div>
           </div>
           <button class="btn btn-primary" onclick="saveSettings()">
-            <span id="save-settings-label">Save Changes</span>
+            <span id="save-settings-label" data-i18n="admin.btn-save">Save Changes</span>
           </button>
         </div>
 
         <!-- Branding -->
         <div class="card">
-          <div class="card-header"><div class="card-title">Branding &amp; Text</div></div>
+          <div class="card-header"><div class="card-title" data-i18n="admin.settings.branding">Branding &amp; Text</div></div>
           <div class="card-body">
             <div class="settings-group">
               <div class="form-group">
-                <label class="form-label" for="cfg-site-name">Site Name</label>
+                <label class="form-label" for="cfg-site-name" data-i18n="admin.settings.site-name">Site Name</label>
                 <input class="form-input" type="text" id="cfg-site-name" placeholder="Complaints">
-                <span class="form-hint">Shown in the navigation bar and emails.</span>
+                <span class="form-hint" data-i18n="admin.settings.site-name-hint">Shown in the navigation bar and emails.</span>
+                <label class="form-label he-label" for="cfg-site-name-he">עברית</label>
+                <input class="form-input" type="text" id="cfg-site-name-he" placeholder="תלונות" dir="rtl">
               </div>
               <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                 <div class="form-group">
-                  <label class="form-label" for="cfg-hero-title">Page Heading</label>
+                  <label class="form-label" for="cfg-hero-title" data-i18n="admin.settings.page-heading">Page Heading</label>
                   <input class="form-input" type="text" id="cfg-hero-title" placeholder="Submit a Complaint">
+                  <label class="form-label he-label" for="cfg-hero-title-he">עברית</label>
+                  <input class="form-input" type="text" id="cfg-hero-title-he" placeholder="הגשת תלונה" dir="rtl">
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="cfg-form-title">Form Card Title</label>
+                  <label class="form-label" for="cfg-form-title" data-i18n="admin.settings.form-card-title">Form Card Title</label>
                   <input class="form-input" type="text" id="cfg-form-title" placeholder="Complaint Details">
+                  <label class="form-label he-label" for="cfg-form-title-he">עברית</label>
+                  <input class="form-input" type="text" id="cfg-form-title-he" placeholder="פרטי התלונה" dir="rtl">
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label" for="cfg-hero-subtitle">Page Subheading</label>
+                <label class="form-label" for="cfg-hero-subtitle" data-i18n="admin.settings.page-subheading">Page Subheading</label>
                 <textarea class="form-textarea" id="cfg-hero-subtitle" rows="2" style="min-height:60px;resize:none;"></textarea>
+                <label class="form-label he-label" for="cfg-hero-subtitle-he">עברית</label>
+                <textarea class="form-textarea" id="cfg-hero-subtitle-he" rows="2" style="min-height:60px;resize:none;" dir="rtl"></textarea>
               </div>
               <div class="form-group">
-                <label class="form-label" for="cfg-privacy-note">Privacy Note (form footer)</label>
+                <label class="form-label" for="cfg-privacy-note" data-i18n="admin.settings.privacy-note">Privacy Note (form footer)</label>
                 <input class="form-input" type="text" id="cfg-privacy-note">
+                <label class="form-label he-label" for="cfg-privacy-note-he">עברית</label>
+                <input class="form-input" type="text" id="cfg-privacy-note-he" dir="rtl">
               </div>
               <div class="form-group">
-                <label class="form-label" for="cfg-submit-label">Submit Button Label</label>
+                <label class="form-label" for="cfg-submit-label" data-i18n="admin.settings.submit-label">Submit Button Label</label>
                 <input class="form-input" type="text" id="cfg-submit-label" placeholder="Send Complaint" style="max-width:240px;">
+                <label class="form-label he-label" for="cfg-submit-label-he">עברית</label>
+                <input class="form-input" type="text" id="cfg-submit-label-he" placeholder="שלח תלונה" dir="rtl" style="max-width:240px;">
               </div>
             </div>
           </div>
@@ -383,16 +399,20 @@
 
         <!-- Success Message -->
         <div class="card">
-          <div class="card-header"><div class="card-title">Success Message</div></div>
+          <div class="card-header"><div class="card-title" data-i18n="admin.settings.success">Success Message</div></div>
           <div class="card-body">
             <div class="settings-group">
               <div class="form-group">
-                <label class="form-label" for="cfg-success-title">Title</label>
+                <label class="form-label" for="cfg-success-title" data-i18n="admin.settings.success-title">Title</label>
                 <input class="form-input" type="text" id="cfg-success-title" placeholder="Complaint Submitted">
+                <label class="form-label he-label" for="cfg-success-title-he">עברית</label>
+                <input class="form-input" type="text" id="cfg-success-title-he" placeholder="התלונה הוגשה" dir="rtl">
               </div>
               <div class="form-group">
-                <label class="form-label" for="cfg-success-text">Body Text</label>
+                <label class="form-label" for="cfg-success-text" data-i18n="admin.settings.success-text">Body Text</label>
                 <textarea class="form-textarea" id="cfg-success-text" rows="2" style="min-height:60px;resize:none;"></textarea>
+                <label class="form-label he-label" for="cfg-success-text-he">עברית</label>
+                <textarea class="form-textarea" id="cfg-success-text-he" rows="2" style="min-height:60px;resize:none;" dir="rtl"></textarea>
               </div>
             </div>
           </div>
@@ -400,13 +420,13 @@
 
         <!-- Fields -->
         <div class="card">
-          <div class="card-header"><div class="card-title">Form Fields</div></div>
+          <div class="card-header"><div class="card-title" data-i18n="admin.settings.fields">Form Fields</div></div>
           <div class="card-body">
             <div class="settings-group">
               <div class="toggle-row">
                 <div>
-                  <div class="toggle-label">Phone Number Field</div>
-                  <div class="toggle-desc">Show an optional phone number input on the form.</div>
+                  <div class="toggle-label" data-i18n="admin.settings.phone-toggle">Phone Number Field</div>
+                  <div class="toggle-desc" data-i18n="admin.settings.phone-desc">Show an optional phone number input on the form.</div>
                 </div>
                 <label class="toggle-switch">
                   <input type="checkbox" id="cfg-show-phone">
@@ -415,10 +435,10 @@
               </div>
               <hr class="settings-divider">
               <div class="form-group">
-                <label class="form-label">Categories</label>
-                <span class="form-hint" style="margin-bottom:8px;display:block;">Complainants pick one of these when submitting.</span>
+                <label class="form-label" data-i18n="admin.settings.categories">Categories</label>
+                <span class="form-hint" style="margin-bottom:8px;display:block;" data-i18n="admin.settings.categories-hint">Complainants pick one of these when submitting.</span>
                 <div class="categories-editor" id="categories-editor"></div>
-                <button class="btn btn-secondary btn-sm" style="margin-top:8px;align-self:flex-start;" onclick="addCategory()">+ Add Category</button>
+                <button class="btn btn-secondary btn-sm" style="margin-top:8px;align-self:flex-start;" onclick="addCategory()" data-i18n="admin.settings.add-category">+ Add Category</button>
               </div>
             </div>
           </div>
@@ -445,14 +465,14 @@
         <div class="modal-meta-row" id="modal-meta"></div>
         <div style="display:flex;flex-direction:column;gap:10px" id="modal-details"></div>
         <div style="margin-top:14px">
-          <div class="form-label" style="margin-bottom:8px">Message</div>
+          <div class="form-label" style="margin-bottom:8px" data-i18n="admin.modal-msg-label">Message</div>
           <div class="message-box" id="modal-message"></div>
         </div>
       </div>
       <div class="modal-footer">
         <div style="display:flex;flex-direction:column;gap:8px;">
           <div class="status-select-wrap">
-            <label class="form-label" style="margin:0">Status:</label>
+            <label class="form-label" style="margin:0" data-i18n="admin.status-label">Status:</label>
             <select class="form-select" id="modal-status-select" onchange="updateStatus()" style="width:auto">
               <option value="new">New</option>
               <option value="in-progress">In Progress</option>
@@ -462,13 +482,13 @@
           </div>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-500);cursor:pointer;">
             <input type="checkbox" id="modal-notify" checked style="cursor:pointer;">
-            Notify complainant by email
+            <span data-i18n="admin.notify">Notify complainant by email</span>
           </label>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-secondary btn-sm" onclick="openThread(currentModalId)">&#128172; Messages</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteFromModal()">&#128465; Delete</button>
-          <button class="btn btn-secondary btn-sm" onclick="closeDetailModal()">Close</button>
+          <button class="btn btn-secondary btn-sm" onclick="openThread(currentModalId)" data-i18n="admin.btn-messages">💬 Messages</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFromModal()" data-i18n="admin.btn-delete">🗑 Delete</button>
+          <button class="btn btn-secondary btn-sm" onclick="closeDetailModal()" data-i18n="admin.btn-close">Close</button>
         </div>
       </div>
     </div>
@@ -486,14 +506,14 @@
       </div>
       <div class="modal-body" style="flex:1;overflow-y:auto;min-height:0;">
         <div class="msg-list" id="thread-msg-list">
-          <div style="text-align:center;padding:24px;color:var(--gray-400);font-size:13px;">Loading…</div>
+          <div style="text-align:center;padding:24px;color:var(--gray-400);font-size:13px;" data-i18n="admin.thread-loading">Loading…</div>
         </div>
       </div>
       <div class="modal-footer" style="flex-direction:column;align-items:stretch;gap:8px;">
-        <textarea class="form-textarea" id="thread-msg-text" placeholder="Type a message to the complainant…" maxlength="5000" rows="3" oninput="updateThreadCharCount()" style="resize:none;font-size:13px;"></textarea>
+        <textarea class="form-textarea" id="thread-msg-text" placeholder="Type a message to the complainant…" maxlength="5000" rows="3" oninput="updateThreadCharCount()" style="resize:none;font-size:13px;" data-i18n="admin.thread-placeholder"></textarea>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
           <span class="msg-char-count" id="thread-msg-char-count">0 / 5000</span>
-          <button class="btn btn-primary btn-sm" id="thread-send-btn" onclick="sendAdminMessage()">Send Message</button>
+          <button class="btn btn-primary btn-sm" id="thread-send-btn" onclick="sendAdminMessage()" data-i18n="admin.btn-send-message">Send Message</button>
         </div>
       </div>
     </div>
@@ -503,15 +523,15 @@
   <div class="modal-backdrop" id="delete-modal" style="display:none" onclick="closeDeleteModal(event)">
     <div class="modal" style="max-width:380px">
       <div class="modal-header">
-        <div class="modal-title" style="color:var(--red)">&#9888; Delete Complaint</div>
+        <div class="modal-title" style="color:var(--red)" data-i18n="admin.delete-title">⚠ Delete Complaint</div>
         <button class="modal-close" onclick="closeDeleteModal()">&#215;</button>
       </div>
       <div class="modal-body">
-        <p style="font-size:14px;color:var(--gray-600)">Are you sure you want to permanently delete this complaint? This action cannot be undone.</p>
+        <p style="font-size:14px;color:var(--gray-600)" data-i18n="admin.delete-confirm">Are you sure you want to permanently delete this complaint? This action cannot be undone.</p>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary btn-sm" onclick="closeDeleteModal()">Cancel</button>
-        <button class="btn btn-primary btn-sm" style="background:var(--red)" id="confirm-delete-btn" onclick="confirmDelete()">Delete</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeDeleteModal()" data-i18n="admin.btn-cancel">Cancel</button>
+        <button class="btn btn-primary btn-sm" style="background:var(--red)" id="confirm-delete-btn" onclick="confirmDelete()" data-i18n="admin.btn-delete">🗑 Delete</button>
       </div>
     </div>
   </div>
@@ -548,7 +568,7 @@
         'resolved': 'badge-resolved',
         'dismissed': 'badge-dismissed',
       };
-      const labels = { 'new': 'New', 'in-progress': 'In Progress', 'resolved': 'Resolved', 'dismissed': 'Dismissed' };
+      const labels = { 'new': t('status.new'), 'in-progress': t('status.in-progress'), 'resolved': t('status.resolved'), 'dismissed': t('status.dismissed') };
       return `<span class="badge ${map[status] || ''}">${labels[status] || status}</span>`;
     }
 
@@ -585,7 +605,7 @@
     async function loadComplaints(page = 1) {
       currentPage = page;
       const body = document.getElementById('table-body');
-      body.innerHTML = '<tr class="loading-row"><td colspan="6">Loading...</td></tr>';
+      body.innerHTML = `<tr class="loading-row"><td colspan="6">${t('admin.loading')}</td></tr>`;
 
       const searchVal = document.getElementById('search-input').value.trim();
       let url = `/api/admin/complaints?page=${page}&limit=${LIMIT}`;
@@ -611,7 +631,7 @@
         renderTable(complaints);
         renderPagination(total, page);
       } catch {
-        body.innerHTML = '<tr class="loading-row"><td colspan="6">Failed to load complaints.</td></tr>';
+        body.innerHTML = `<tr class="loading-row"><td colspan="6">${t('admin.load-failed')}</td></tr>`;
       }
     }
 
@@ -622,8 +642,8 @@
           <tr><td colspan="6">
             <div class="empty-state">
               <div class="empty-state-icon">&#128203;</div>
-              <div class="empty-state-title">No complaints found</div>
-              <div class="empty-state-text">Try adjusting your filters or search query.</div>
+              <div class="empty-state-title">${t('admin.no-complaints')}</div>
+              <div class="empty-state-text">${t('admin.no-complaints-hint')}</div>
             </div>
           </td></tr>`;
         return;
@@ -663,7 +683,7 @@
 
       const start = (page - 1) * LIMIT + 1;
       const end = Math.min(page * LIMIT, total);
-      info.textContent = `${start}–${end} of ${total}`;
+      info.textContent = `${start}–${end} ${t('admin.pagination-of')} ${total}`;
 
       let html = `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="loadComplaints(${page - 1})">&#8592;</button>`;
       for (let i = 1; i <= pages; i++) {
@@ -683,8 +703,7 @@
       currentFilter = status;
       document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
       document.querySelector(`[data-status="${status}"]`).classList.add('active');
-      const labels = { all: 'All Complaints', new: 'New Complaints', 'in-progress': 'In Progress', resolved: 'Resolved', dismissed: 'Dismissed' };
-      document.getElementById('table-title').textContent = labels[status] || 'Complaints';
+      document.getElementById('table-title').textContent = t('admin.table-title-' + status) || t('admin.all');
       loadComplaints(1);
     }
 
@@ -698,7 +717,7 @@
     async function openDetail(id) {
       currentModalId = id;
       document.getElementById('detail-modal').style.display = 'flex';
-      document.getElementById('modal-subject').textContent = 'Loading...';
+      document.getElementById('modal-subject').textContent = t('admin.modal-loading');
       document.getElementById('modal-meta').innerHTML = '';
       document.getElementById('modal-details').innerHTML = '';
       document.getElementById('modal-message').textContent = '';
@@ -716,25 +735,25 @@
         `;
         document.getElementById('modal-details').innerHTML = `
           <div class="detail-row">
-            <div class="detail-label">Name</div>
+            <div class="detail-label">${t('admin.modal-name')}</div>
             <div class="detail-value">${escHtml(c.name)}</div>
           </div>
           <div class="detail-row">
-            <div class="detail-label">Email</div>
+            <div class="detail-label">${t('admin.modal-email')}</div>
             <div class="detail-value"><a href="mailto:${escHtml(c.email)}" style="color:var(--blue)">${escHtml(c.email)}</a></div>
           </div>
           ${c.phone ? `<div class="detail-row">
-            <div class="detail-label">Phone</div>
+            <div class="detail-label">${t('admin.modal-phone')}</div>
             <div class="detail-value">${escHtml(c.phone)}</div>
           </div>` : ''}
           <div class="detail-row">
-            <div class="detail-label">ID</div>
+            <div class="detail-label">${t('admin.modal-id')}</div>
             <div class="detail-value" style="font-family:monospace;font-size:12px">${escHtml(c.id)}</div>
           </div>
         `;
         document.getElementById('modal-message').textContent = c.message;
       } catch {
-        document.getElementById('modal-subject').textContent = 'Error loading complaint';
+        document.getElementById('modal-subject').textContent = t('admin.modal-error');
       }
     }
 
@@ -752,9 +771,9 @@
       if (!id) return;
       currentModalId = id;
       document.getElementById('thread-modal').style.display = 'flex';
-      document.getElementById('thread-modal-subject').textContent = 'Loading…';
+      document.getElementById('thread-modal-subject').textContent = t('admin.thread-loading');
       document.getElementById('thread-modal-meta').textContent = '';
-      document.getElementById('thread-msg-list').innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray-400);font-size:13px;">Loading…</div>';
+      document.getElementById('thread-msg-list').innerHTML = `<div style="text-align:center;padding:24px;color:var(--gray-400);font-size:13px;">${t('admin.thread-loading')}</div>`;
       document.getElementById('thread-msg-text').value = '';
       document.getElementById('thread-msg-char-count').textContent = '0 / 5000';
 
@@ -765,19 +784,19 @@
         document.getElementById('thread-modal-meta').textContent = `${c.name} · ${c.email}`;
         renderThread(c.messages || []);
       } catch {
-        document.getElementById('thread-modal-subject').textContent = 'Error loading thread';
+        document.getElementById('thread-modal-subject').textContent = t('admin.thread-error');
       }
     }
 
     function renderThread(messages) {
       const list = document.getElementById('thread-msg-list');
       if (!messages.length) {
-        list.innerHTML = `<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:24px;">No messages yet. Send one below to start the conversation.</div>`;
+        list.innerHTML = `<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:24px;">${t('admin.thread-empty')}</div>`;
         return;
       }
       list.innerHTML = messages.map(m => `
         <div class="msg-bubble ${escHtml(m.from)}">
-          <div class="msg-sender">${m.from === 'admin' ? 'You (Support)' : escHtml(m.senderName)}</div>
+          <div class="msg-sender">${m.from === 'admin' ? t('admin.thread-you') : escHtml(m.senderName)}</div>
           <div class="msg-text">${escHtml(m.text)}</div>
           <div class="msg-time">${formatDate(m.sentAt)}</div>
         </div>
@@ -795,11 +814,11 @@
     async function sendAdminMessage() {
       if (!currentModalId) return;
       const text = document.getElementById('thread-msg-text').value.trim();
-      if (!text) { showToast('Please enter a message.', 'error'); return; }
+      if (!text) { showToast(t('admin.please-enter-msg'), 'error'); return; }
 
       const btn = document.getElementById('thread-send-btn');
       btn.disabled = true;
-      btn.textContent = 'Sending…';
+      btn.textContent = t('admin.sending');
 
       try {
         const res = await fetch(`/api/admin/complaints/${currentModalId}/message`, {
@@ -810,11 +829,11 @@
 
         if (!res.ok) {
           const json = await res.json().catch(() => ({}));
-          showToast(json.error || 'Failed to send message.', 'error');
+          showToast(json.error || t('admin.toast-message-failed'), 'error');
           return;
         }
 
-        showToast('Message sent.');
+        showToast(t('admin.toast-message-sent'));
         document.getElementById('thread-msg-text').value = '';
         document.getElementById('thread-msg-char-count').textContent = '0 / 5000';
 
@@ -825,10 +844,10 @@
           renderThread(c.messages || []);
         }
       } catch {
-        showToast('Network error.', 'error');
+        showToast(t('admin.toast-network'), 'error');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Send Message';
+        btn.textContent = t('admin.btn-send-message');
       }
     }
 
@@ -851,7 +870,7 @@
           body: JSON.stringify({ status, notify }),
         });
         if (res.ok) {
-          showToast('Status updated.');
+          showToast(t('admin.toast-status-updated'));
           document.getElementById('modal-meta').innerHTML = `
             ${badgeHtml(status)}
             <span class="category-chip" id="modal-category-chip"></span>
@@ -859,10 +878,10 @@
           loadComplaints(currentPage);
           loadStats();
         } else {
-          showToast('Failed to update status.', 'error');
+          showToast(t('admin.toast-status-failed'), 'error');
         }
       } catch {
-        showToast('Network error.', 'error');
+        showToast(t('admin.toast-network'), 'error');
       }
     }
 
@@ -886,24 +905,24 @@
       if (!deleteTargetId) return;
       const btn = document.getElementById('confirm-delete-btn');
       btn.disabled = true;
-      btn.textContent = 'Deleting...';
+      btn.textContent = t('admin.delete-deleting');
 
       try {
         const res = await fetch(`/api/admin/complaints/${deleteTargetId}`, { method: 'DELETE' });
         if (res.ok) {
-          showToast('Complaint deleted.');
+          showToast(t('admin.toast-deleted'));
           document.getElementById('delete-modal').style.display = 'none';
           if (document.getElementById('detail-modal').style.display === 'flex') closeDetailModal();
           loadComplaints(currentPage);
           loadStats();
         } else {
-          showToast('Failed to delete.', 'error');
+          showToast(t('admin.toast-delete-failed'), 'error');
         }
       } catch {
-        showToast('Network error.', 'error');
+        showToast(t('admin.toast-network'), 'error');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Delete';
+        btn.textContent = t('admin.btn-delete');
         deleteTargetId = null;
       }
     }
@@ -934,25 +953,34 @@
       try {
         const cfg = await fetch('/api/admin/form-config').then(r => r.json());
         document.getElementById('cfg-site-name').value = cfg.siteName || '';
+        document.getElementById('cfg-site-name-he').value = cfg.siteName_he || '';
         document.getElementById('cfg-hero-title').value = cfg.heroTitle || '';
+        document.getElementById('cfg-hero-title-he').value = cfg.heroTitle_he || '';
         document.getElementById('cfg-hero-subtitle').value = cfg.heroSubtitle || '';
+        document.getElementById('cfg-hero-subtitle-he').value = cfg.heroSubtitle_he || '';
         document.getElementById('cfg-form-title').value = cfg.formTitle || '';
+        document.getElementById('cfg-form-title-he').value = cfg.formTitle_he || '';
         document.getElementById('cfg-privacy-note').value = cfg.privacyNote || '';
+        document.getElementById('cfg-privacy-note-he').value = cfg.privacyNote_he || '';
         document.getElementById('cfg-submit-label').value = cfg.submitLabel || '';
+        document.getElementById('cfg-submit-label-he').value = cfg.submitLabel_he || '';
         document.getElementById('cfg-success-title').value = cfg.successTitle || '';
+        document.getElementById('cfg-success-title-he').value = cfg.successTitle_he || '';
         document.getElementById('cfg-success-text').value = cfg.successText || '';
+        document.getElementById('cfg-success-text-he').value = cfg.successText_he || '';
         document.getElementById('cfg-show-phone').checked = cfg.showPhone !== false;
-        renderCategoryList(cfg.categories || []);
+        renderCategoryList(cfg.categories || [], cfg.categories_he || []);
       } catch {
-        showToast('Failed to load settings.', 'error');
+        showToast(t('admin.toast-settings-failed'), 'error');
       }
     }
 
-    function renderCategoryList(categories) {
+    function renderCategoryList(categories, categoriesHe) {
       const editor = document.getElementById('categories-editor');
       editor.innerHTML = categories.map((cat, i) => `
         <div class="category-item" data-index="${i}">
-          <input class="form-input" type="text" value="${escHtml(cat)}" placeholder="Category name">
+          <input class="form-input cat-en" type="text" value="${escHtml(cat)}" placeholder="${t('admin.settings.cat-ph')}">
+          <input class="form-input cat-he" type="text" value="${escHtml((categoriesHe && categoriesHe[i]) || '')}" placeholder="עברית" dir="rtl">
           <button class="remove-btn" onclick="removeCategory(${i})" title="Remove">&#215;</button>
         </div>
       `).join('');
@@ -965,19 +993,19 @@
       div.className = 'category-item';
       div.dataset.index = idx;
       div.innerHTML = `
-        <input class="form-input" type="text" placeholder="Category name">
+        <input class="form-input cat-en" type="text" placeholder="${t('admin.settings.cat-ph')}">
+        <input class="form-input cat-he" type="text" placeholder="עברית" dir="rtl">
         <button class="remove-btn" onclick="removeCategory(${idx})" title="Remove">&#215;</button>
       `;
       editor.appendChild(div);
-      div.querySelector('input').focus();
+      div.querySelector('.cat-en').focus();
     }
 
     function removeCategory(idx) {
       const editor = document.getElementById('categories-editor');
       const items = editor.querySelectorAll('.category-item');
-      if (items.length <= 1) { showToast('At least one category is required.', 'error'); return; }
+      if (items.length <= 1) { showToast(t('admin.settings.one-cat-required'), 'error'); return; }
       items[idx].remove();
-      // Re-index
       editor.querySelectorAll('.category-item').forEach((el, i) => {
         el.dataset.index = i;
         el.querySelector('.remove-btn').setAttribute('onclick', `removeCategory(${i})`);
@@ -985,36 +1013,50 @@
     }
 
     function getCategories() {
-      return Array.from(document.querySelectorAll('.category-item input'))
+      return Array.from(document.querySelectorAll('.category-item .cat-en'))
         .map(el => el.value.trim())
         .filter(Boolean);
+    }
+
+    function getCategoriesHe() {
+      return Array.from(document.querySelectorAll('.category-item .cat-he'))
+        .map(el => el.value.trim());
     }
 
     async function saveSettings() {
       const errEl = document.getElementById('settings-error');
       errEl.style.display = 'none';
       const btn = document.getElementById('save-settings-label');
-      btn.textContent = 'Saving…';
+      btn.textContent = t('admin.btn-saving');
 
       const categories = getCategories();
       if (categories.length === 0) {
         errEl.style.display = 'flex';
-        document.getElementById('settings-error-text').textContent = 'At least one category is required.';
-        btn.textContent = 'Save Changes';
+        document.getElementById('settings-error-text').textContent = t('admin.settings.one-cat-required');
+        btn.textContent = t('admin.btn-save');
         return;
       }
 
       const payload = {
         siteName: document.getElementById('cfg-site-name').value.trim(),
+        siteName_he: document.getElementById('cfg-site-name-he').value.trim(),
         heroTitle: document.getElementById('cfg-hero-title').value.trim(),
+        heroTitle_he: document.getElementById('cfg-hero-title-he').value.trim(),
         heroSubtitle: document.getElementById('cfg-hero-subtitle').value.trim(),
+        heroSubtitle_he: document.getElementById('cfg-hero-subtitle-he').value.trim(),
         formTitle: document.getElementById('cfg-form-title').value.trim(),
+        formTitle_he: document.getElementById('cfg-form-title-he').value.trim(),
         privacyNote: document.getElementById('cfg-privacy-note').value.trim(),
+        privacyNote_he: document.getElementById('cfg-privacy-note-he').value.trim(),
         submitLabel: document.getElementById('cfg-submit-label').value.trim(),
+        submitLabel_he: document.getElementById('cfg-submit-label-he').value.trim(),
         successTitle: document.getElementById('cfg-success-title').value.trim(),
+        successTitle_he: document.getElementById('cfg-success-title-he').value.trim(),
         successText: document.getElementById('cfg-success-text').value.trim(),
+        successText_he: document.getElementById('cfg-success-text-he').value.trim(),
         showPhone: document.getElementById('cfg-show-phone').checked,
         categories,
+        categories_he: getCategoriesHe(),
       };
 
       try {
@@ -1025,15 +1067,15 @@
         });
         const json = await res.json();
         if (res.ok) {
-          showToast('Form settings saved.');
+          showToast(t('admin.toast-settings-saved'));
         } else {
           errEl.style.display = 'flex';
           document.getElementById('settings-error-text').textContent = json.error || 'Failed to save.';
         }
       } catch {
-        showToast('Network error. Could not save settings.', 'error');
+        showToast(t('admin.toast-network'), 'error');
       } finally {
-        btn.textContent = 'Save Changes';
+        btn.textContent = t('admin.btn-save');
       }
     }
 

@@ -11,6 +11,7 @@
   <meta property="og:url" content="__OG_URL__">
   <meta name="theme-color" content="#dc2626">
   <link rel="stylesheet" href="/style.css">
+  <script src="/i18n.js"></script>
   <script src="/theme.js"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=_onTurnstileLoad" async defer></script>
   <style>
@@ -102,12 +103,13 @@
   </style>
 </head>
 <body>
+  <button class="btn btn-secondary btn-sm theme-toggle-fixed" onclick="toggleLang()" data-i18n="nav.lang" style="top:16px;right:60px;">עברית</button>
   <button class="btn btn-secondary btn-sm theme-toggle theme-toggle-fixed" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
   <div class="login-box">
     <div class="login-header">
       <div class="login-logo">&#128274;</div>
-      <h1>Admin Login</h1>
-      <p>Sign in to access the complaints panel</p>
+      <h1 data-i18n="login.title">Admin Login</h1>
+      <p data-i18n="login.subtitle">Sign in to access the complaints panel</p>
     </div>
     <div class="login-body">
       <div id="login-error" class="alert alert-error">
@@ -117,14 +119,14 @@
 
       <form class="login-fields" id="login-form" novalidate onsubmit="return false">
         <div class="form-group">
-          <label class="form-label" for="username">Username</label>
+          <label class="form-label" for="username" data-i18n="login.username">Username</label>
           <div class="input-icon-wrap">
             <span class="input-icon">&#128100;</span>
             <input class="form-input" type="text" id="username" name="username" placeholder="admin" autocomplete="username" required>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label" for="password">Password</label>
+          <label class="form-label" for="password" data-i18n="login.password">Password</label>
           <div class="input-icon-wrap">
             <span class="input-icon">&#128274;</span>
             <input class="form-input" type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
@@ -135,11 +137,11 @@
       <div id="cf-widget" style="margin-bottom:16px;"></div>
 
       <button class="btn btn-primary login-btn" id="login-btn" onclick="doLogin()">
-        <span id="login-label">Sign In</span>
+        <span id="login-label" data-i18n="login.btn">Sign In</span>
       </button>
     </div>
     <div class="login-footer">
-      Complaints Admin &mdash; Authorized access only
+      <span data-i18n="login.footer">Complaints Admin — Authorized access only</span>
     </div>
   </div>
 
@@ -176,7 +178,7 @@
 
       if (!username || !password) {
         errorEl.style.display = 'flex';
-        document.getElementById('login-error-text').textContent = 'Please enter your username and password.';
+        document.getElementById('login-error-text').textContent = t('login.err.empty');
         return;
       }
 
@@ -185,14 +187,14 @@
         const tok = _tsId !== null ? window.turnstile.getResponse(_tsId) : '';
         if (!tok) {
           errorEl.style.display = 'flex';
-          document.getElementById('login-error-text').textContent = 'Please complete the CAPTCHA verification.';
+          document.getElementById('login-error-text').textContent = t('login.err.captcha');
           return;
         }
       }
 
       errorEl.style.display = 'none';
       btn.disabled = true;
-      label.innerHTML = '<span class="spinner"></span> Signing in...';
+      label.innerHTML = '<span class="spinner"></span> ' + t('login.signing-in');
 
       try {
         const cfToken = _tsId !== null ? window.turnstile.getResponse(_tsId) : '';
@@ -208,18 +210,18 @@
           window.location.href = window.location.pathname.replace(/\/login$/, '');
         } else {
           errorEl.style.display = 'flex';
-          document.getElementById('login-error-text').textContent = json.error || 'Invalid credentials.';
+          document.getElementById('login-error-text').textContent = json.error || t('login.err.invalid');
           btn.disabled = false;
-          label.textContent = 'Sign In';
+          label.textContent = t('login.btn');
           document.getElementById('password').value = '';
           document.getElementById('password').focus();
           if (_tsId !== null) window.turnstile.reset(_tsId);
         }
       } catch {
         errorEl.style.display = 'flex';
-        document.getElementById('login-error-text').textContent = 'Network error. Please try again.';
+        document.getElementById('login-error-text').textContent = t('login.err.network');
         btn.disabled = false;
-        label.textContent = 'Sign In';
+        label.textContent = t('login.btn');
         if (_tsId !== null) window.turnstile.reset(_tsId);
       }
     }
