@@ -6,6 +6,7 @@
   <title>Admin Login — Complaints</title>
   <link rel="stylesheet" href="/style.css">
   <script src="/theme.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=_onTurnstileLoad" async defer></script>
   <style>
     body {
       display: flex;
@@ -125,6 +126,8 @@
         </div>
       </form>
 
+      <div id="cf-widget" style="margin-bottom:16px;"></div>
+
       <button class="btn btn-primary login-btn" id="login-btn" onclick="doLogin()">
         <span id="login-label">Sign In</span>
       </button>
@@ -135,6 +138,24 @@
   </div>
 
   <script>
+    // Turnstile state
+    let _tsKey = '', _tsId = null, _tsReady = false;
+    function _onTurnstileLoad() { _tsReady = true; _renderTurnstile(); }
+    function _renderTurnstile() {
+      if (!_tsReady || !_tsKey) return;
+      const el = document.getElementById('cf-widget');
+      if (!el || el.children.length) return;
+      _tsId = window.turnstile.render(el, {
+        sitekey: _tsKey,
+        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+      });
+    }
+
+    // Load site key from form config
+    fetch('/api/form-config').then(r => r.json()).then(cfg => {
+      if (cfg.turnstileSiteKey) { _tsKey = cfg.turnstileSiteKey; _renderTurnstile(); }
+    }).catch(() => {});
+
     // Allow Enter key to submit
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter') doLogin();
@@ -153,15 +174,26 @@
         return;
       }
 
+      // Turnstile check
+      if (_tsKey) {
+        const tok = _tsId !== null ? window.turnstile.getResponse(_tsId) : '';
+        if (!tok) {
+          errorEl.style.display = 'flex';
+          document.getElementById('login-error-text').textContent = 'Please complete the CAPTCHA verification.';
+          return;
+        }
+      }
+
       errorEl.style.display = 'none';
       btn.disabled = true;
       label.innerHTML = '<span class="spinner"></span> Signing in...';
 
       try {
+        const cfToken = _tsId !== null ? window.turnstile.getResponse(_tsId) : '';
         const res = await fetch('/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ username, password, 'cf-turnstile-response': cfToken }),
         });
 
         const json = await res.json();
@@ -175,12 +207,14 @@
           label.textContent = 'Sign In';
           document.getElementById('password').value = '';
           document.getElementById('password').focus();
+          if (_tsId !== null) window.turnstile.reset(_tsId);
         }
       } catch {
         errorEl.style.display = 'flex';
         document.getElementById('login-error-text').textContent = 'Network error. Please try again.';
         btn.disabled = false;
         label.textContent = 'Sign In';
+        if (_tsId !== null) window.turnstile.reset(_tsId);
       }
     }
   </script>

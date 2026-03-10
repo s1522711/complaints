@@ -328,6 +328,25 @@ async function sendUserReplyEmail(complaint, messageText) {
   });
 }
 
+// --- Cloudflare Turnstile verification ---
+async function verifyTurnstile(token, ip) {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) return true; // Not configured — skip (dev mode)
+  if (!token) return false;
+  try {
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret, response: token, remoteip: ip }),
+    });
+    const data = await res.json();
+    return data.success === true;
+  } catch (err) {
+    console.error('Turnstile verify error:', err.message);
+    return false;
+  }
+}
+
 // --- Middleware ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -348,12 +367,17 @@ function requireAuth(req, res, next) {
 
 // Public: get form config (used by the form page)
 app.get('/api/form-config', (_req, res) => {
-  res.json(readFormConfig());
+  const config = readFormConfig();
+  res.json({ ...config, turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '' });
 });
 
 // Submit complaint (public)
 app.post('/api/complaint', async (req, res) => {
-  const { name, email, phone, category, subject, message } = req.body;
+  const { name, email, phone, category, subject, message, 'cf-turnstile-response': cfToken } = req.body;
+
+  if (!await verifyTurnstile(cfToken, req.ip)) {
+    return res.status(400).json({ error: 'CAPTCHA verification failed. Please try again.' });
+  }
 
   if (!name || !email || !category || !subject || !message) {
     return res.status(400).json({ error: 'Please fill in all required fields.' });
@@ -383,8 +407,13 @@ app.get('/admin/login', (req, res) => {
 });
 
 // Admin login action
-app.post('/admin/login', (req, res) => {
-  const { username, password } = req.body;
+app.post('/admin/login', async (req, res) => {
+  const { username, password, 'cf-turnstile-response': cfToken } = req.body;
+
+  if (!await verifyTurnstile(cfToken, req.ip)) {
+    return res.status(401).json({ error: 'CAPTCHA verification failed. Please try again.' });
+  }
+
   if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
     req.session.authenticated = true;
     req.session.username = username;
@@ -490,7 +519,11 @@ app.get('/api/complaint/:id/thread', (req, res) => {
 
 // API: complainant sends a reply (public)
 app.post('/api/complaint/:id/reply', async (req, res) => {
-  const { text } = req.body;
+  const { text, 'cf-turnstile-response': cfToken } = req.body;
+
+  if (!await verifyTurnstile(cfToken, req.ip)) {
+    return res.status(400).json({ error: 'CAPTCHA verification failed. Please try again.' });
+  }
   if (!text || !text.trim()) return res.status(400).json({ error: 'Message text is required.' });
   if (text.length > 5000) return res.status(400).json({ error: 'Message is too long.' });
 

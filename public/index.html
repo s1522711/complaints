@@ -6,6 +6,7 @@
   <title id="page-title">Submit a Complaint</title>
   <link rel="stylesheet" href="/style.css">
   <script src="/theme.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=_onTurnstileLoad" async defer></script>
   <style>
     .hero {
       background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
@@ -199,6 +200,7 @@
               <span class="char-count" id="char-count">0 / 5000</span>
             </div>
           </div>
+          <div id="cf-widget"></div>
         </form>
       </div>
 
@@ -214,6 +216,19 @@
   <div id="toast-container"></div>
 
   <script>
+    // Turnstile state
+    let _tsKey = '', _tsId = null, _tsReady = false;
+    function _onTurnstileLoad() { _tsReady = true; _renderTurnstile(); }
+    function _renderTurnstile() {
+      if (!_tsReady || !_tsKey) return;
+      const el = document.getElementById('cf-widget');
+      if (!el || el.children.length) return;
+      _tsId = window.turnstile.render(el, {
+        sitekey: _tsKey,
+        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+      });
+    }
+
     // Load form config from server and apply to page
     (async function applyConfig() {
       try {
@@ -239,6 +254,9 @@
           opt.textContent = cat;
           sel.appendChild(opt);
         });
+
+        // Turnstile
+        if (cfg.turnstileSiteKey) { _tsKey = cfg.turnstileSiteKey; _renderTurnstile(); }
       } catch {
         // Fallback: populate categories with defaults if config fails
         const defaults = ['Service', 'Product', 'Billing', 'Staff', 'Technical Issue', 'Delivery', 'Other'];
@@ -312,6 +330,12 @@
     async function submitForm() {
       if (!validate()) return;
 
+      // Turnstile check
+      if (_tsKey) {
+        const tok = _tsId !== null ? window.turnstile.getResponse(_tsId) : '';
+        if (!tok) { showGlobalError('Please complete the CAPTCHA verification.'); return; }
+      }
+
       const btn = document.getElementById('submit-btn');
       const label = document.getElementById('submit-label');
       btn.disabled = true;
@@ -324,6 +348,7 @@
         category: document.getElementById('category').value,
         subject: document.getElementById('subject').value.trim(),
         message: document.getElementById('message').value.trim(),
+        'cf-turnstile-response': _tsId !== null ? window.turnstile.getResponse(_tsId) : '',
       };
 
       try {
@@ -339,6 +364,7 @@
           showGlobalError(json.error || 'Something went wrong. Please try again.');
           btn.disabled = false;
           label.textContent = 'Send Complaint';
+          if (_tsId !== null) window.turnstile.reset(_tsId);
           return;
         }
 
@@ -353,6 +379,7 @@
         showGlobalError('Network error. Please check your connection and try again.');
         btn.disabled = false;
         label.textContent = 'Send Complaint';
+        if (_tsId !== null) window.turnstile.reset(_tsId);
       }
     }
 

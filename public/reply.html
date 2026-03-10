@@ -6,6 +6,7 @@
   <title>Reply to Complaint</title>
   <link rel="stylesheet" href="/style.css">
   <script src="/theme.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=_onTurnstileLoad" async defer></script>
   <style>
     .hero {
       background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
@@ -193,8 +194,11 @@
           <div class="char-count" id="reply-char-count">0 / 5000</div>
         </div>
       </div>
-      <div class="reply-footer">
-        <button class="btn btn-primary" id="reply-btn" onclick="sendReply()">Send Reply</button>
+      <div class="reply-footer" style="flex-direction:column;align-items:stretch;gap:10px;">
+        <div id="cf-widget"></div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-primary" id="reply-btn" onclick="sendReply()">Send Reply</button>
+        </div>
       </div>
     </div>
 
@@ -218,6 +222,22 @@
   <script>
     const complaintId = location.pathname.split('/').pop();
     let complaintData = null;
+
+    // Turnstile state
+    let _tsKey = '', _tsId = null, _tsReady = false;
+    function _onTurnstileLoad() { _tsReady = true; _renderTurnstile(); }
+    function _renderTurnstile() {
+      if (!_tsReady || !_tsKey) return;
+      const el = document.getElementById('cf-widget');
+      if (!el || el.children.length) return;
+      _tsId = window.turnstile.render(el, {
+        sitekey: _tsKey,
+        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+      });
+    }
+    fetch('/api/form-config').then(r => r.json()).then(cfg => {
+      if (cfg.turnstileSiteKey) { _tsKey = cfg.turnstileSiteKey; _renderTurnstile(); }
+    }).catch(() => {});
 
     function escHtml(s) {
       return String(s || '')
@@ -292,6 +312,11 @@
       if (!text) { showToast('Please enter a message.', 'error'); return; }
       if (text.length < 2) { showToast('Message is too short.', 'error'); return; }
 
+      if (_tsKey) {
+        const tok = _tsId !== null ? window.turnstile.getResponse(_tsId) : '';
+        if (!tok) { showToast('Please complete the CAPTCHA verification.', 'error'); return; }
+      }
+
       const btn = document.getElementById('reply-btn');
       btn.disabled = true;
       btn.textContent = 'Sending…';
@@ -300,7 +325,10 @@
         const res = await fetch(`/api/complaint/${complaintId}/reply`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({
+            text,
+            'cf-turnstile-response': _tsId !== null ? window.turnstile.getResponse(_tsId) : '',
+          }),
         });
 
         if (!res.ok) {
@@ -308,6 +336,7 @@
           showToast(json.error || 'Failed to send reply.', 'error');
           btn.disabled = false;
           btn.textContent = 'Send Reply';
+          if (_tsId !== null) window.turnstile.reset(_tsId);
           return;
         }
 
@@ -325,6 +354,7 @@
         showToast('Network error. Please try again.', 'error');
         btn.disabled = false;
         btn.textContent = 'Send Reply';
+        if (_tsId !== null) window.turnstile.reset(_tsId);
       }
     }
 
