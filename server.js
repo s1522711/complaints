@@ -353,7 +353,7 @@ async function verifyTurnstile(token, ip) {
 // --- Middleware ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 app.use(session({
   secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
   resave: false,
@@ -524,7 +524,9 @@ app.post('/api/admin/complaints/:id/message', requireAuth, async (req, res) => {
   const result = addMessage(req.params.id, 'admin', 'Support', text.trim());
   if (!result) return res.status(500).json({ error: 'Failed to save message.' });
 
-  const host = (process.env.SITE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '') + BASE_PATH;
+  const host = process.env.SITE_URL
+    ? process.env.SITE_URL.replace(/\/$/, '')
+    : `${req.protocol}://${req.get('host')}` + BASE_PATH;
   sendAdminMessageEmail(complaint, text.trim(), host).catch(err =>
     console.error('Admin message email failed:', err.message)
   );
