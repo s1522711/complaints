@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Complaints</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+
+    .admin-layout {
+      display: flex;
+      flex: 1;
+      max-width: 1280px;
+      margin: 24px auto;
+      padding: 0 16px;
+      gap: 20px;
+      width: 100%;
+      align-items: flex-start;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 76px;
+    }
+
+    .sidebar-section { margin-bottom: 8px; }
+    .sidebar-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gray-400); padding: 0 10px; margin-bottom: 4px; }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.1s;
+      text-decoration: none;
+      justify-content: space-between;
+    }
+
+    .sidebar-link:hover { background: var(--gray-100); color: var(--gray-900); }
+    .sidebar-link.active { background: var(--red-light); color: var(--red); font-weight: 600; }
+
+    .sidebar-link-left { display: flex; align-items: center; gap: 8px; }
+
+    .sidebar-count {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 99px;
+      background: var(--gray-200);
+      color: var(--gray-600);
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-count.red { background: #fee2e2; color: var(--red); }
+
+    /* MAIN CONTENT */
+    .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+
+    /* PAGE HEADER */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .page-title { font-size: 22px; font-weight: 800; color: var(--gray-900); }
+    .page-subtitle { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+
+    /* FILTERS BAR */
+    .filters-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 14px; }
+    .search-input { padding-left: 36px !important; }
+
+    .filter-select { min-width: 140px; }
+
+    /* COMPLAINT ROW */
+    .complaint-subject {
+      font-weight: 600;
+      color: var(--gray-900);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 280px;
+    }
+
+    .complaint-preview {
+      font-size: 12px;
+      color: var(--gray-400);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 280px;
+      margin-top: 2px;
+    }
+
+    .complaint-meta { font-size: 12px; color: var(--gray-400); }
+
+    .action-btns { display: flex; gap: 6px; align-items: center; }
+
+    /* CATEGORY CHIP */
+    .category-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    /* MODAL DETAIL */
+    .modal-meta-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .message-box {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--gray-700);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+
+    .status-select-wrap { display: flex; gap: 8px; align-items: center; }
+
+    /* Loading / empty */
+    .loading-row td { text-align: center; padding: 40px; color: var(--gray-400); }
+
+    @media (max-width: 768px) {
+      .admin-layout { flex-direction: column; margin: 12px auto; }
+      .sidebar { width: 100%; position: static; }
+      .sidebar-section { display: flex; gap: 6px; flex-wrap: wrap; }
+      .sidebar-label { display: none; }
+      .complaint-subject { max-width: 180px; }
+      .complaint-preview { max-width: 180px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <div class="brand-icon">&#128172;</div>
+      Complaints
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Public Form</a>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div class="admin-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Filter by Status</div>
+        <a class="sidebar-link active" data-status="all" onclick="setFilter('all')">
+          <span class="sidebar-link-left">&#128203; All Complaints</span>
+          <span class="sidebar-count" id="count-all">—</span>
+        </a>
+        <a class="sidebar-link" data-status="new" onclick="setFilter('new')">
+          <span class="sidebar-link-left">&#128312; New</span>
+          <span class="sidebar-count red" id="count-new">—</span>
+        </a>
+        <a class="sidebar-link" data-status="in-progress" onclick="setFilter('in-progress')">
+          <span class="sidebar-link-left">&#9203; In Progress</span>
+          <span class="sidebar-count" id="count-in-progress">—</span>
+        </a>
+        <a class="sidebar-link" data-status="resolved" onclick="setFilter('resolved')">
+          <span class="sidebar-link-left">&#10004; Resolved</span>
+          <span class="sidebar-count" id="count-resolved">—</span>
+        </a>
+        <a class="sidebar-link" data-status="dismissed" onclick="setFilter('dismissed')">
+          <span class="sidebar-link-left">&#128683; Dismissed</span>
+          <span class="sidebar-count" id="count-dismissed">—</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="stat-total">—</div>
+          <div class="stat-label">Total Complaints</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-number" id="stat-new">—</div>
+          <div class="stat-label">New</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-number" id="stat-inprogress">—</div>
+          <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-number" id="stat-resolved">—</div>
+          <div class="stat-label">Resolved</div>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" id="table-title">All Complaints</div>
+          </div>
+          <div class="filters-bar">
+            <div class="search-wrap">
+              <span class="search-icon">&#128269;</span>
+              <input class="form-input search-input" type="text" id="search-input" placeholder="Search complaints..." oninput="onSearch()">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="complaints-table">
+            <thead>
+              <tr>
+                <th>Complaint</th>
+                <th>From</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th style="width:80px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              <tr class="loading-row"><td colspan="6">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination" id="pagination" style="display:none">
+          <span id="pagination-info"></span>
+          <div class="pagination-btns" id="pagination-btns"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-backdrop" id="detail-modal" style="display:none" onclick="closeModal(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-subject">Complaint Detail</div>
+        <button class="modal-close" onclick="closeDetailModal()">&#215;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-meta-row" id="modal-meta"></div>
+        <div style="display:flex;flex-direction:column;gap:10px" id="modal-details"></div>
+        <div style="margin-top:14px">
+          <div class="form-label" style="margin-bottom:8px">Message</div>
+          <div class="message-box" id="modal-message"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="status-select-wrap">
+          <label class="form-label" style="margin:0">Status:</label>
+          <select class="form-select" id="modal-status-select" onchange="updateStatus()" style="width:auto">
+            <option value="new">New</option>
+            <option value="in-progress">In Progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="dismissed">Dismissed</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-danger btn-sm" onclick="deleteFromModal()">&#128465; Delete</button>
+          <button class="btn btn-secondary btn-sm" onclick="closeDetailModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div class="modal-backdrop" id="delete-modal" style="display:none" onclick="closeDeleteModal(event)">
+    <div class="modal" style="max-width:380px">
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--red)">&#9888; Delete Complaint</div>
+        <button class="modal-close" onclick="closeDeleteModal()">&#215;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:var(--gray-600)">Are you sure you want to permanently delete this complaint? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" style="background:var(--red)" id="confirm-delete-btn" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    let currentFilter = 'all';
+    let currentPage = 1;
+    let totalComplaints = 0;
+    let searchTimer = null;
+    let currentModalId = null;
+    let deleteTargetId = null;
+    const LIMIT = 20;
+
+    // ---- Toast ----
+    function showToast(msg, type = 'success') {
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      const icons = { success: '✓', error: '✕', info: 'ℹ' };
+      el.innerHTML = `<span>${icons[type] || ''}</span> ${msg}`;
+      document.getElementById('toast-container').appendChild(el);
+      setTimeout(() => {
+        el.style.animation = 'toast-out 0.3s ease forwards';
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
+    }
+
+    // ---- Status badges ----
+    function badgeHtml(status) {
+      const map = {
+        'new': 'badge-new',
+        'in-progress': 'badge-in-progress',
+        'resolved': 'badge-resolved',
+        'dismissed': 'badge-dismissed',
+      };
+      const labels = { 'new': 'New', 'in-progress': 'In Progress', 'resolved': 'Resolved', 'dismissed': 'Dismissed' };
+      return `<span class="badge ${map[status] || ''}">${labels[status] || status}</span>`;
+    }
+
+    function escHtml(s) {
+      return String(s || '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) +
+        ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ---- Load stats ----
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/admin/stats');
+        const s = await res.json();
+        document.getElementById('stat-total').textContent = s.total;
+        document.getElementById('stat-new').textContent = s.new;
+        document.getElementById('stat-inprogress').textContent = s.inProgress;
+        document.getElementById('stat-resolved').textContent = s.resolved;
+        document.getElementById('count-all').textContent = s.total;
+        document.getElementById('count-new').textContent = s.new;
+        document.getElementById('count-in-progress').textContent = s.inProgress;
+        document.getElementById('count-resolved').textContent = s.resolved;
+        document.getElementById('count-dismissed').textContent = s.dismissed;
+      } catch { /* ignore */ }
+    }
+
+    // ---- Load complaints ----
+    async function loadComplaints(page = 1) {
+      currentPage = page;
+      const body = document.getElementById('table-body');
+      body.innerHTML = '<tr class="loading-row"><td colspan="6">Loading...</td></tr>';
+
+      const searchVal = document.getElementById('search-input').value.trim();
+      let url = `/api/admin/complaints?page=${page}&limit=${LIMIT}`;
+      if (currentFilter !== 'all') url += `&status=${encodeURIComponent(currentFilter)}`;
+
+      try {
+        const res = await fetch(url);
+        let { complaints, total } = await res.json();
+
+        // Client-side search filter
+        if (searchVal) {
+          const q = searchVal.toLowerCase();
+          complaints = complaints.filter(c =>
+            c.name.toLowerCase().includes(q) ||
+            c.email.toLowerCase().includes(q) ||
+            c.subject.toLowerCase().includes(q) ||
+            c.message.toLowerCase().includes(q)
+          );
+          total = complaints.length;
+        }
+
+        totalComplaints = total;
+        renderTable(complaints);
+        renderPagination(total, page);
+      } catch {
+        body.innerHTML = '<tr class="loading-row"><td colspan="6">Failed to load complaints.</td></tr>';
+      }
+    }
+
+    function renderTable(complaints) {
+      const body = document.getElementById('table-body');
+      if (!complaints.length) {
+        body.innerHTML = `
+          <tr><td colspan="6">
+            <div class="empty-state">
+              <div class="empty-state-icon">&#128203;</div>
+              <div class="empty-state-title">No complaints found</div>
+              <div class="empty-state-text">Try adjusting your filters or search query.</div>
+            </div>
+          </td></tr>`;
+        return;
+      }
+
+      body.innerHTML = complaints.map(c => `
+        <tr>
+          <td>
+            <div class="complaint-subject">${escHtml(c.subject)}</div>
+            <div class="complaint-preview">${escHtml(c.message.substring(0, 80))}${c.message.length > 80 ? '…' : ''}</div>
+          </td>
+          <td>
+            <div style="font-size:13px;font-weight:600">${escHtml(c.name)}</div>
+            <div class="complaint-meta">${escHtml(c.email)}</div>
+          </td>
+          <td><span class="category-chip">${escHtml(c.category)}</span></td>
+          <td>${badgeHtml(c.status)}</td>
+          <td class="complaint-meta">${formatDate(c.createdAt)}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-secondary btn-sm" title="View" onclick="openDetail('${c.id}')">&#128065;</button>
+              <button class="btn btn-danger btn-sm" title="Delete" onclick="openDelete('${c.id}')">&#128465;</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPagination(total, page) {
+      const pag = document.getElementById('pagination');
+      const info = document.getElementById('pagination-info');
+      const btns = document.getElementById('pagination-btns');
+      const pages = Math.ceil(total / LIMIT);
+
+      if (pages <= 1) { pag.style.display = 'none'; return; }
+      pag.style.display = 'flex';
+
+      const start = (page - 1) * LIMIT + 1;
+      const end = Math.min(page * LIMIT, total);
+      info.textContent = `${start}–${end} of ${total}`;
+
+      let html = `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="loadComplaints(${page - 1})">&#8592;</button>`;
+      for (let i = 1; i <= pages; i++) {
+        if (pages > 7 && i > 2 && i < pages - 1 && Math.abs(i - page) > 1) {
+          if (i === 3 || i === pages - 2) html += `<span style="padding:0 4px;color:var(--gray-400)">…</span>`;
+          continue;
+        }
+        html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="loadComplaints(${i})">${i}</button>`;
+      }
+      html += `<button class="page-btn" ${page === pages ? 'disabled' : ''} onclick="loadComplaints(${page + 1})">&#8594;</button>`;
+      btns.innerHTML = html;
+    }
+
+    // ---- Filter ----
+    function setFilter(status) {
+      currentFilter = status;
+      document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+      document.querySelector(`[data-status="${status}"]`).classList.add('active');
+      const labels = { all: 'All Complaints', new: 'New Complaints', 'in-progress': 'In Progress', resolved: 'Resolved', dismissed: 'Dismissed' };
+      document.getElementById('table-title').textContent = labels[status] || 'Complaints';
+      loadComplaints(1);
+    }
+
+    // ---- Search ----
+    function onSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => loadComplaints(1), 300);
+    }
+
+    // ---- Detail Modal ----
+    async function openDetail(id) {
+      currentModalId = id;
+      document.getElementById('detail-modal').style.display = 'flex';
+      document.getElementById('modal-subject').textContent = 'Loading...';
+      document.getElementById('modal-meta').innerHTML = '';
+      document.getElementById('modal-details').innerHTML = '';
+      document.getElementById('modal-message').textContent = '';
+
+      try {
+        const res = await fetch(`/api/admin/complaints/${id}`);
+        const c = await res.json();
+
+        document.getElementById('modal-subject').textContent = c.subject;
+        document.getElementById('modal-status-select').value = c.status;
+        document.getElementById('modal-meta').innerHTML = `
+          ${badgeHtml(c.status)}
+          <span class="category-chip">${escHtml(c.category)}</span>
+          <span style="font-size:12px;color:var(--gray-400)">${formatDate(c.createdAt)}</span>
+        `;
+        document.getElementById('modal-details').innerHTML = `
+          <div class="detail-row">
+            <div class="detail-label">Name</div>
+            <div class="detail-value">${escHtml(c.name)}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Email</div>
+            <div class="detail-value"><a href="mailto:${escHtml(c.email)}" style="color:var(--blue)">${escHtml(c.email)}</a></div>
+          </div>
+          ${c.phone ? `<div class="detail-row">
+            <div class="detail-label">Phone</div>
+            <div class="detail-value">${escHtml(c.phone)}</div>
+          </div>` : ''}
+          <div class="detail-row">
+            <div class="detail-label">ID</div>
+            <div class="detail-value" style="font-family:monospace;font-size:12px">${escHtml(c.id)}</div>
+          </div>
+        `;
+        document.getElementById('modal-message').textContent = c.message;
+      } catch {
+        document.getElementById('modal-subject').textContent = 'Error loading complaint';
+      }
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').style.display = 'none';
+      currentModalId = null;
+    }
+
+    function closeModal(e) {
+      if (e.target === document.getElementById('detail-modal')) closeDetailModal();
+    }
+
+    async function updateStatus() {
+      if (!currentModalId) return;
+      const status = document.getElementById('modal-status-select').value;
+      try {
+        const res = await fetch(`/api/admin/complaints/${currentModalId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        if (res.ok) {
+          showToast('Status updated.');
+          document.getElementById('modal-meta').innerHTML = `
+            ${badgeHtml(status)}
+            <span class="category-chip" id="modal-category-chip"></span>
+          `;
+          loadComplaints(currentPage);
+          loadStats();
+        } else {
+          showToast('Failed to update status.', 'error');
+        }
+      } catch {
+        showToast('Network error.', 'error');
+      }
+    }
+
+    // ---- Delete ----
+    function openDelete(id) {
+      deleteTargetId = id;
+      document.getElementById('delete-modal').style.display = 'flex';
+    }
+
+    function closeDeleteModal(e) {
+      if (e && e.target !== document.getElementById('delete-modal')) return;
+      document.getElementById('delete-modal').style.display = 'none';
+      deleteTargetId = null;
+    }
+
+    function deleteFromModal() {
+      openDelete(currentModalId);
+    }
+
+    async function confirmDelete() {
+      if (!deleteTargetId) return;
+      const btn = document.getElementById('confirm-delete-btn');
+      btn.disabled = true;
+      btn.textContent = 'Deleting...';
+
+      try {
+        const res = await fetch(`/api/admin/complaints/${deleteTargetId}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('Complaint deleted.');
+          document.getElementById('delete-modal').style.display = 'none';
+          if (document.getElementById('detail-modal').style.display === 'flex') closeDetailModal();
+          loadComplaints(currentPage);
+          loadStats();
+        } else {
+          showToast('Failed to delete.', 'error');
+        }
+      } catch {
+        showToast('Network error.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Delete';
+        deleteTargetId = null;
+      }
+    }
+
+    // ---- Logout ----
+    async function logout() {
+      await fetch('/admin/logout', { method: 'POST' });
+      window.location.href = '/admin/login';
+    }
+
+    // ---- Init ----
+    loadStats();
+    loadComplaints(1);
+    setInterval(() => { loadStats(); loadComplaints(currentPage); }, 60000);
+  </script>
+</body>
+</html>

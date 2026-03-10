@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit a Complaint</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: white;
+      padding: 48px 24px 64px;
+      text-align: center;
+    }
+
+    .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+    .hero p { font-size: 16px; opacity: 0.9; max-width: 480px; margin: 0 auto; }
+
+    .main-container {
+      max-width: 680px;
+      margin: -32px auto 48px;
+      padding: 0 16px;
+    }
+
+    .form-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+
+    .form-card-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--gray-100);
+      background: var(--gray-50);
+    }
+
+    .form-card-header h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 2px;
+    }
+
+    .form-card-header p {
+      font-size: 13px;
+      color: var(--gray-500);
+    }
+
+    .form-body { padding: 28px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-fields { display: flex; flex-direction: column; gap: 18px; }
+
+    .form-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--gray-100);
+      background: var(--gray-50);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .privacy-note { font-size: 12px; color: var(--gray-500); }
+
+    .submit-btn { min-width: 160px; justify-content: center; font-size: 15px; padding: 11px 24px; }
+
+    .char-count { font-size: 12px; color: var(--gray-400); text-align: right; margin-top: 3px; }
+
+    .success-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+      padding: 48px 32px;
+      text-align: center;
+      display: none;
+    }
+
+    .success-icon {
+      width: 72px; height: 72px;
+      background: var(--green-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 20px;
+    }
+
+    .success-title { font-size: 22px; font-weight: 800; color: var(--gray-900); margin-bottom: 8px; }
+    .success-text { color: var(--gray-500); font-size: 15px; margin-bottom: 24px; }
+    .success-id { font-family: monospace; font-size: 13px; background: var(--gray-100); padding: 8px 14px; border-radius: 6px; color: var(--gray-600); display: inline-block; margin-bottom: 28px; }
+
+    #global-error { display: none; margin-bottom: 16px; }
+
+    @media (max-width: 560px) {
+      .form-row { grid-template-columns: 1fr; }
+      .form-footer { flex-direction: column; align-items: stretch; }
+      .submit-btn { width: 100%; }
+      .hero h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <div class="brand-icon">&#128172;</div>
+      Complaints
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link active">Submit Complaint</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>Submit a Complaint</h1>
+    <p>We take every complaint seriously. Please fill out the form below and we'll get back to you as soon as possible.</p>
+  </div>
+
+  <div class="main-container">
+    <!-- Success card (shown after submit) -->
+    <div class="success-card" id="success-card">
+      <div class="success-icon">&#10003;</div>
+      <div class="success-title">Complaint Submitted</div>
+      <p class="success-text">Thank you. Your complaint has been received and we will review it shortly.</p>
+      <div class="success-id" id="success-id"></div>
+      <button class="btn btn-secondary" onclick="resetForm()">Submit Another</button>
+    </div>
+
+    <!-- Form card -->
+    <div class="form-card" id="form-card">
+      <div class="form-card-header">
+        <h2>Complaint Details</h2>
+        <p>Fields marked with <span style="color:var(--red)">*</span> are required</p>
+      </div>
+
+      <div class="form-body">
+        <div id="global-error" class="alert alert-error">
+          <span class="alert-icon">&#9888;</span>
+          <span id="global-error-text"></span>
+        </div>
+
+        <form id="complaint-form" class="form-fields" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="name">Full Name <span class="required">*</span></label>
+              <input class="form-input" type="text" id="name" name="name" placeholder="John Smith" autocomplete="name" required>
+              <span class="form-error" id="name-error"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="email">Email Address <span class="required">*</span></label>
+              <input class="form-input" type="email" id="email" name="email" placeholder="john@example.com" autocomplete="email" required>
+              <span class="form-error" id="email-error"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="phone">Phone Number</label>
+              <input class="form-input" type="tel" id="phone" name="phone" placeholder="+1 555 000 0000" autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="category">Category <span class="required">*</span></label>
+              <select class="form-select" id="category" name="category" required>
+                <option value="" disabled selected>Select a category</option>
+                <option value="Service">Service</option>
+                <option value="Product">Product</option>
+                <option value="Billing">Billing</option>
+                <option value="Staff">Staff</option>
+                <option value="Technical">Technical Issue</option>
+                <option value="Delivery">Delivery</option>
+                <option value="Other">Other</option>
+              </select>
+              <span class="form-error" id="category-error"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="subject">Subject <span class="required">*</span></label>
+            <input class="form-input" type="text" id="subject" name="subject" placeholder="Brief description of your complaint" maxlength="120" required>
+            <span class="form-error" id="subject-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="message">Message <span class="required">*</span></label>
+            <textarea class="form-textarea" id="message" name="message" placeholder="Please describe your complaint in detail, including any relevant dates, reference numbers, or other information..." rows="6" maxlength="5000" required></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+              <span class="form-error" id="message-error"></span>
+              <span class="char-count" id="char-count">0 / 5000</span>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="form-footer">
+        <p class="privacy-note">&#128274; Your information is kept confidential and used only to process your complaint.</p>
+        <button class="btn btn-primary submit-btn" id="submit-btn" onclick="submitForm()">
+          <span id="submit-label">Send Complaint</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    // Character counter
+    const messageEl = document.getElementById('message');
+    const charCount = document.getElementById('char-count');
+    messageEl.addEventListener('input', () => {
+      charCount.textContent = `${messageEl.value.length} / 5000`;
+    });
+
+    function showError(fieldId, msg) {
+      const el = document.getElementById(fieldId + '-error');
+      const input = document.getElementById(fieldId);
+      if (el) { el.textContent = msg; el.classList.add('show'); }
+      if (input) input.classList.add('error');
+    }
+
+    function clearErrors() {
+      document.querySelectorAll('.form-error').forEach(el => {
+        el.textContent = ''; el.classList.remove('show');
+      });
+      document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => {
+        el.classList.remove('error');
+      });
+      document.getElementById('global-error').style.display = 'none';
+    }
+
+    function showGlobalError(msg) {
+      const el = document.getElementById('global-error');
+      document.getElementById('global-error-text').textContent = msg;
+      el.style.display = 'flex';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function validate() {
+      clearErrors();
+      let valid = true;
+
+      const name = document.getElementById('name').value.trim();
+      if (!name) { showError('name', 'Full name is required.'); valid = false; }
+
+      const email = document.getElementById('email').value.trim();
+      if (!email) { showError('email', 'Email is required.'); valid = false; }
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('email', 'Please enter a valid email address.'); valid = false; }
+
+      const category = document.getElementById('category').value;
+      if (!category) { showError('category', 'Please select a category.'); valid = false; }
+
+      const subject = document.getElementById('subject').value.trim();
+      if (!subject) { showError('subject', 'Subject is required.'); valid = false; }
+      else if (subject.length < 5) { showError('subject', 'Subject must be at least 5 characters.'); valid = false; }
+
+      const message = document.getElementById('message').value.trim();
+      if (!message) { showError('message', 'Message is required.'); valid = false; }
+      else if (message.length < 10) { showError('message', 'Message must be at least 10 characters.'); valid = false; }
+
+      return valid;
+    }
+
+    async function submitForm() {
+      if (!validate()) return;
+
+      const btn = document.getElementById('submit-btn');
+      const label = document.getElementById('submit-label');
+      btn.disabled = true;
+      label.innerHTML = '<span class="spinner"></span>';
+
+      const data = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        category: document.getElementById('category').value,
+        subject: document.getElementById('subject').value.trim(),
+        message: document.getElementById('message').value.trim(),
+      };
+
+      try {
+        const res = await fetch('/api/complaint', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          showGlobalError(json.error || 'Something went wrong. Please try again.');
+          btn.disabled = false;
+          label.textContent = 'Send Complaint';
+          return;
+        }
+
+        // Success
+        document.getElementById('form-card').style.display = 'none';
+        const successCard = document.getElementById('success-card');
+        successCard.style.display = 'block';
+        document.getElementById('success-id').textContent = 'Reference ID: ' + json.id;
+        successCard.scrollIntoView({ behavior: 'smooth' });
+
+      } catch (err) {
+        showGlobalError('Network error. Please check your connection and try again.');
+        btn.disabled = false;
+        label.textContent = 'Send Complaint';
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('complaint-form').reset();
+      charCount.textContent = '0 / 5000';
+      clearErrors();
+      document.getElementById('success-card').style.display = 'none';
+      document.getElementById('form-card').style.display = 'block';
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = false;
+      document.getElementById('submit-label').textContent = 'Send Complaint';
+    }
+  </script>
+</body>
+</html>
